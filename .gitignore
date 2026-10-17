@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+.env
+*.log
+.DS_Store
+# private inputs / plaintext data / local-only data-prep scripts
+sources/
+/data/
+docs/data/*.json
+audio/
+listening/
+scripts/parse_vocab.py
+scripts/scrape_grammar.py
+.claude/
+bg/
+scripts/transcribe_audio.py
+scripts/build_examples.py
+scripts/check_examples.py
+scripts/merge_examples.py
+scripts/merge_class.py
+scripts/build_compare.py
+scripts/gen_audio.py
+audio_cache/
+scripts/build_listening.py
+listening/
+scripts/parse_class.py

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日檢JLPT每日學習</title>
+<style>
+:root{color-scheme:dark;--fg:#e9eef5;--mut:#a3b3c6;--card:rgba(10,18,32,.74);--line:rgba(255,255,255,.14);--acc:#8fb0ff;--ok:#8fe0a0;--btn:rgba(10,18,32,.78);--on:#06121c;--c2:#ffcf6b;--ts:0 1px 8px rgba(0,0,0,.6);--sky:linear-gradient(rgba(15,25,95,.34),rgba(15,25,95,.34)),linear-gradient(rgba(5,9,18,.45),rgba(5,9,18,.62)),url(bg.jpg) center/cover no-repeat;--page:#0a1220}
+body[data-slot=am]{color-scheme:light;--c2:#0b7a6b;--fg:#1f2937;--mut:#5b6678;--card:rgba(255,255,255,.78);--line:rgba(60,40,10,.16);--acc:#d9731a;--ok:#2e7d32;--btn:rgba(255,255,255,.85);--on:#fff;--ts:0 1px 6px rgba(255,255,255,.7);--sky:linear-gradient(180deg,#ffd9b0 0%,#ffe9c9 32%,#cfe6f7 72%,#a9d2ee 100%);--page:#ffe9c9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--fg);font:16px/1.6 -apple-system,"Hiragino Sans","Noto Sans TC",sans-serif}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--sky)}
+main{max-width:1180px;margin:0 auto;padding:16px clamp(12px,3vw,32px)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));column-gap:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:0 18px;align-items:start}
+@media(max-width:560px){.vgrid,.grid{display:block}}
+h1{font-size:20px;margin:8px 0;text-shadow:var(--ts)}
+h2{font-size:17px;margin:24px 0 8px;text-shadow:var(--ts);border-left:4px solid var(--acc);padding-left:8px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+select,button{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--btn);color:var(--fg)}
+button{cursor:pointer}button.on{background:var(--acc);color:var(--on);border-color:var(--acc)}
+.card{border-left:3px solid var(--acc);background:var(--card);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.pat{font-size:18px;font-weight:600}.mut{color:var(--mut);font-size:14px}
+.ex{margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--line)}
+.ex .ja{font-size:17px}.ex .zh{color:var(--mut)}
+ruby rt{font-size:.55em;color:var(--mut)}
+.w{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.w .btns{grid-column:2;grid-row:1/3;display:flex;gap:6px}
+.w:first-child{border-top:0}
+.w .jp{font-size:18px}
+tr.today td{background:rgba(255,200,80,.16)}.cmpo{margin-top:8px}.cmpo>summary{cursor:pointer;color:var(--c2);font-weight:600;font-size:14px}
+.lab{display:inline-block;padding:1px 9px;margin-right:8px;border-radius:6px;background:var(--acc);color:var(--on);font-size:13px;font-weight:700;letter-spacing:.05em}.lab.ok{background:var(--ok)}
+.qbox,.abox{margin:8px 0;padding:8px 12px;border-radius:10px;font-weight:600;line-height:1.7}
+.qbox{border-left:5px solid var(--acc);background:rgba(255,190,70,.14)}.abox{border-left:5px solid var(--ok);background:rgba(90,200,120,.16)}
+body[data-slot=pm] .qbox{background:rgba(120,150,255,.16)}
+h2.h-l{color:var(--acc);border-color:var(--acc)}
+h2.h-c{color:var(--c2);border-color:var(--c2)}
+h2.h-g{color:var(--g3);border-color:var(--g3)}
+h2.h-v{color:var(--ok);border-color:var(--ok)}
+h2.h-t{font-size:20px}
+body{--g3:#ff9fb8}body[data-slot=am]{--g3:#2563c9}
+.lab2.r{background:var(--g3);color:#06121c}body[data-slot=am] .lab2.r{color:#fff}
+details>summary{color:var(--c2);font-weight:600}
+.lcard .pat{color:var(--acc);font-size:18px}
+.lab2{display:inline-block;padding:0 8px;margin-right:6px;border-radius:6px;font-size:12.5px;font-weight:700;background:var(--c2);color:var(--on)}
+.lab2.g{background:var(--acc)}.lab2.w{background:var(--ok);color:#fff}
+body:not([data-slot=am]) .lab2.w{color:#06121c}
+.nh{margin-top:10px;font-weight:700;color:var(--g3)}
+.mo{margin-top:8px}.mo>summary{cursor:pointer;color:var(--c2);font-weight:600;font-size:14px}
+.cmpd{margin:8px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:8px 12px}.cmpd summary{cursor:pointer;font-weight:600;color:var(--acc)}table.cmp td,table.cmp th{font-size:14px}td.tip{color:var(--acc);min-width:110px}
+.cls{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.12);border:1px solid var(--line)}.clsh{font-weight:600;color:var(--acc)}.note{margin-top:6px;font-size:14px;color:var(--mut)}.card.co{border-left-width:5px}
+.tw{overflow-x:auto;margin:8px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}th{background:rgba(127,127,127,.15)}td.k{font-weight:600;white-space:nowrap}
+@media(max-width:700px){
+ .tw{overflow:visible}
+ table.cmp,table.rt{display:block;width:100%;border:0}
+ table.cmp tbody,table.rt tbody,table.cmp tr,table.rt tr,table.cmp td,table.rt td{display:block;width:100%}
+ table.cmp tr:first-child,table.rt tr:first-child{display:none}
+ table.cmp tr,table.rt tr{border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:6px 10px;background:rgba(127,127,127,.07)}
+ table.cmp td,table.rt td{border:0;padding:3px 0;font-size:15px}
+ table.cmp td::before,table.rt td::before{content:attr(data-label);display:block;font-size:12px;color:var(--mut);margin-top:4px}
+ table.cmp td.k,table.rt td.k{font-size:18px;white-space:normal}
+ table.cmp td.k::before,table.rt td.k::before{display:none}
+ td.tip{min-width:0}
+ table.rt td{display:flex;align-items:baseline;gap:10px;padding:2px 0}
+ table.rt td::before{display:inline-block;min-width:3.8em;margin-top:0;flex:none}
+ table.rt tr{padding:4px 10px}
+}
+.items{margin-top:8px;font-size:15px;line-height:2}
+.vex{grid-column:1/-1;margin:2px 0 4px;padding-left:10px;border-left:2px solid var(--line)}.vex .ja{font-size:16px}.vex .zh{color:var(--mut);font-size:14px}.w .gl{grid-column:1}.w.known{opacity:.5}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:0 5px;color:var(--mut)}
+.pair{color:var(--ok)}
+a{color:var(--acc)}
+.rel a{margin-right:10px}
+</style>
+</head>
+<body><main>
+<h1>日檢JLPT每日學習 <span class="mut" id="cd"></span></h1>
+<div class="bar">
+  <select id="day"></select>
+  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
+  <label class="mut"><input type="checkbox" id="hide"> 隱藏已熟悉</label>
+</div>
+<div id="out"></div>
+<p class="mut" style="text-shadow:var(--ts)">個人學習用。發音為瀏覽器內建日文語音。<a href="#" id="lock">鎖定</a>　<a href="#" id="rk">重設「已熟悉」</a></p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let P,G,V,C=[],LS=[],VI={};
+const known=new Set(store.get('jpl_known',[]));
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const ruby=s=>esc(s).replace(/([一-鿿々ァ-ヶー]+)\(([^)]+)\)/g,'<ruby>$1<rt>$2</rt></ruby>');
+const kanaOf=s=>String(s||'').replace(/[一-鿿々ァ-ヶー]+\(([^)]+)\)/g,'$1');
+let JV=null;
+function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));if(!vs.length)return null;
+ for(const re of [/Kyoko|Otoya|O-Ren|Hattori/i,/Google|Nanami|Haruka|Ayumi/i])for(const v of vs)if(re.test(v.name))return v;return vs[0]}
+let KEY=null,AIDX={},PK={},CUR=null;
+function ensurePack(name){if(PK[name])return PK[name];
+ PK[name]=fetch('data/a/'+name+'.enc').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(async ab=>{
+  const b=new Uint8Array(ab);const raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16)));
+  const ml=new DataView(raw.buffer).getUint32(0);const man=JSON.parse(new TextDecoder().decode(raw.slice(4,4+ml)));const base=4+ml;const out={};
+  for(const k in man){const [o,l]=man[k];out[k]=URL.createObjectURL(new Blob([raw.slice(base+o,base+o+l)],{type:'audio/mpeg'}))}return out}).catch(e=>{delete PK[name];throw e});
+ return PK[name]}
+async function playClip(id,fb){try{const name=AIDX[id];if(!name||!KEY)throw 0;const m=await ensurePack(name);if(!m[id])throw 0;
+ try{speechSynthesis.cancel()}catch{}if(CUR){CUR.pause()}CUR=new Audio(m[id]);await CUR.play()}catch(e){say(fb)}}
+function preload(ids){const names=new Set();ids.forEach(i=>{if(AIDX[i])names.add(AIDX[i])});names.forEach(n=>ensurePack(n).catch(()=>{}))}
+window.playClip=playClip;
+function say(t,gap){try{speechSynthesis.cancel();JV=JV||pickVoice();const parts=Array.isArray(t)?t:String(t).split('|');
+ parts.filter(Boolean).forEach((x,i)=>{const u=new SpeechSynthesisUtterance(x);u.lang='ja-JP';u.rate=.7;if(JV)u.voice=JV;speechSynthesis.speak(u);
+  if(i<parts.length-1){const g=new SpeechSynthesisUtterance('、');g.lang='ja-JP';g.volume=0;g.rate=.5;speechSynthesis.speak(g)}})}catch{}}
+try{speechSynthesis.onvoiceschanged=()=>{JV=null}}catch{}
+function speakText(e){ // what to read aloud for a vocab entry
+ const alt=[];let r=e.reading||e.word;
+ r=r.replace(/（＝([^）]*)）/g,(_,a)=>{alt.push(a);return''});
+ const kata=/^[\u30a0-\u30ffー・～（）()するを\s]+$/.test(e.word);
+ const base=(kata?e.word:r).replace(/[（(][^）)]*[）)]|[～〜＝]/g,'').trim();
+ return [base,...alt].join('|')}
+window.say=say;window.speakText=speakText;
+function today(){const d=new Date(Date.now()+8*3600e3).toISOString().slice(0,10);const i=P.days.findIndex(x=>x.date===d);return i<0?(d<P.start?0:P.days.length-1):i}
+const LAU={};
+async function playListen(id){const btn=document.getElementById('lp-'+id);try{
+ if(!LAU[id]){btn.textContent='載入中…';const b=new Uint8Array(await (await fetch('data/l/'+id+'.enc')).arrayBuffer());
+  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16));LAU[id]=URL.createObjectURL(new Blob([raw],{type:'audio/mpeg'}))}
+ try{speechSynthesis.cancel()}catch{}if(CUR){CUR.pause()}CUR=new Audio(LAU[id]);CUR.controls=false;await CUR.play();btn.textContent='▶ 再播一次'}catch(e){btn.textContent='⚠ 無法播放'}}
+window.playListen=playListen;
+function noteHtml(n){const m=String(n).match(/^(文法|單字|比較|重點|口訣)[｜|：:]\s*(.*)$/s);
+ if(!m)return `<div class="note">${esc(n)}</div>`;const k=m[1];const cls=k==='文法'?'g':k==='單字'?'w':'';
+ return `<div class="note"><span class="lab2 ${cls}">${k}</span>${esc(m[2])}</div>`}
+function listenHtml(id){const L=LS.find(x=>x.id===id);if(!L)return'';
+ return `<h2 class="h-l">🎧 今日聽力</h2><div class="card lcard"><div class="pat">${esc(L.title)} <span class="tag">${L.level}</span></div>
+ ${L.q?`<div class="qbox"><span class="lab">題目</span>${esc(L.q)}</div>`:''}
+ <div style="margin:8px 0"><button id="lp-${L.id}" onclick="playListen('${L.id}')">▶ 播放</button> <span class="mut">先聽再看，聽不懂再展開 👇</span></div>
+ <details><summary>逐字稿＋中文翻譯</summary>${L.lines.map(l=>`<div class="ex"><div class="ja">${ruby(l.ruby)}</div><div class="zh">${esc(l.zh)}</div></div>`).join('')}${L.ans?`<div class="abox"><span class="lab ok">答案</span>${esc(L.ans)}</div>`:''}</details>
+ <details><summary>重點文法・單字</summary>${L.notes.map(noteHtml).join('')}</details></div>`}
+function cmpTable(f,idxs,today){return `<div class="tw"><table class="cmp"><tr><th>句型</th><th>接續</th><th>意思・語感</th><th>例句</th><th>記憶口訣</th></tr>${idxs.map(ri=>{const r=f.rows[ri];return `<tr class="${today&&today.has(ri)?'today':''}"><td class="k" data-label="句型">${today&&today.has(ri)?'★ ':''}${esc(r.pat)}</td><td data-label="接續">${esc(r.conn)}</td><td data-label="意思・語感">${esc(r.mean)}</td><td data-label="例句">${r.ja?ruby(r.ruby)+` <button onclick="playClip('r:${f.id}:${ri}','${kanaOf(r.ruby||r.ja).replace(/'/g,"")}')">🔊</button><div class="mut">${esc(r.zh)}</div>`:''}</td><td class="tip" data-label="記憶口訣">${esc(r.tip)}</td></tr>`}).join('')}</table></div>`}
+function cmpHtml(f,op,ids){const all=f.rows.map((_,i)=>i);
+ const hit=ids?all.filter(i=>(f.rows[i].ids||[]).some(x=>ids.includes(x))):[];
+ const key=`<div class="mut" style="margin:6px 0">${esc(f.key||'')}</div>`;
+ const note=f.note?`<div class="note">${esc(f.note)}</div>`:'';
+ if(!hit.length||hit.length===all.length)return `<details class="cmpd"${op===true?' open':''}><summary>📊 ${esc(f.title)}</summary>${key}${cmpTable(f,all)}${note}</details>`;
+ const rest=all.filter(i=>!hit.includes(i));
+ return `<details class="cmpd"${op===true?' open':''}><summary>📊 ${esc(f.title)} <span class="tag">★ 今日 ${hit.length} 條</span></summary>${key}${cmpTable(f,hit,new Set(hit))}<details class="cmpo"><summary>其他相似句型（${rest.length}）— 要比較再點開</summary>${cmpTable(f,rest)}</details>${note}</details>`}
+function cmpFor(ids){return C.filter(f=>f.members.some(m=>ids.includes(m)))}
+function exhtml(list,n,pfx,start){start=start||0;return list.slice(start,n).map((e,k)=>{const i=k+start;return `<div class="ex"><div class="ja">${ruby(e.ruby)} <button onclick="playClip('${pfx||''}${i}','${kanaOf(e.ruby||e.ja).replace(/'/g,"")}')">🔊</button></div><div class="zh">${esc(e.zh)}</div></div>`}).join('')}
+function tbl(t){return `<div class="tw"><table class="rt"><tr>${t.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i==0?'k':''}" data-label="${esc(t.head[i]||'')}">${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`}
+function moreEx(list,from,to,pfx){const n=Math.min(list.length,to)-from;return n>0?`<details class="mo"><summary>更多例句（${n}）</summary>${exhtml(list,to,pfx,from)}</details>`:''}
+function gcard(id){const g=G[id];if(!g)return'';
+ const rel=(g.related||[]).filter(r=>r.title&&/N\d文法\d+|差別/.test(r.title)&&!/上一篇|下一篇|^[←→]|^[AＡ]和[BＢ]/.test(r.title)).slice(0,4).map(r=>`<a target="_blank" rel="noopener" href="${r.url||'#'}">${esc(r.title.slice(0,24))}</a>`).join('');
+ const title=g.class_only?esc(g.title):esc(g.title.replace(/^N\d文法\d+/,''));
+ if(g.class_only){            // curated cards (keigo, class supplements): keep everything visible
+  return `<div class="card co"><div class="pat">${title} <span class="tag">${g.level}</span></div>
+  ${g.connection?`<div class="mut"><span class="lab2">接續</span>${esc(g.connection)}</div>`:''}<div>${esc(g.meaning)}</div>
+  ${g.table?tbl(g.table):''}${exhtml(g.examples,20,`g:${id}:`)}
+  ${(g.notes||[]).filter(n=>n).map(n=>`<div class="note">${esc(n)}</div>`).join('')}</div>`}
+ const cls=(g.class||[]).map(c=>`<div class="cls"><div class="clsh">📚 課堂講義 ${esc(c.id)}</div><div class="mut"><span class="lab2">接續</span>${esc(c.connection)}</div><div>${esc(c.meaning)}</div>${exhtml(c.examples,1,`c:${c.id}:`)}${moreEx(c.examples,1,12,`c:${c.id}:`)}${c.note?noteHtml(c.note):''}</div>`).join('');
+ const detail=`${g.connection?`<div class="mut"><span class="lab2">接續</span>${esc(g.connection)}</div>`:''}${g.meaning?`<div>${esc(g.meaning)}</div>`:''}${((ns)=>ns.filter((n,i)=>!n.startsWith('## ')||(ns[i+1]&&!ns[i+1].startsWith('## '))))((g.notes||[]).filter(n=>n&&!/^例句[：:]?$/.test(n)).slice(0,10)).map(n=>n.startsWith('## ')?`<div class="nh">${esc(n.slice(3))}</div>`:`<div class="note">${esc(n)}</div>`).join('')}${(g.items||[]).length?`<div class="items"><span class="lab2 r">詞例</span>${g.items.slice(0,16).map(i=>`${ruby(i.ruby)}${i.zh?'（'+esc(i.zh)+'）':''}`).join('、')}</div>`:''}${moreEx(g.examples,1,4,`g:${id}:`)}${rel?`<div class="rel mut" style="margin-top:8px"><span class="lab2 r">相關</span>${rel}</div>`:''}${g.url?`<div class="mut" style="margin-top:6px"><a target="_blank" rel="noopener" href="${g.url}">原文</a></div>`:''}`;
+ return `<div class="card"><div class="pat">${title} <span class="tag">${g.level}</span></div>
+ ${g.pattern?`<div class="mut">${esc(g.pattern)}</div>`:''}${exhtml(g.examples,1,`g:${id}:`)}
+ ${cls}
+ ${detail.trim()?`<details class="mo"><summary>詳細說明・接續・更多</summary>${detail}</details>`:''}</div>`}
+function wrow(id,paired){const e=VI[id];if(!e)return'';const k=known.has(id);if(k&&$('#hide').checked)return'';
+ const w=e.word.replace(/'/g,'');
+ const ex=e.ex?`<div class="vex"><span class="ja">${ruby(e.ex.ruby)}</span> <button onclick="playClip('e:${id}',kanaOf(VI['${id}'].ex.ruby))">🔊</button><div class="zh">${esc(e.ex.zh)}</div></div>`:'';
+ return `<div class="w ${k?'known':''}" data-id="${id}"><div class="jp">${esc(e.word)}${paired?' <span class="pair" title="出現在今日文法例句">●</span>':''}<div class="mut">${esc(e.reading)} ・ ${esc(e.romaji)}</div></div>
+ <div class="gl">${esc(e.gloss)} <span class="tag">${e.level}</span></div>
+ <div class="btns"><button onclick="playClip('w:${id}',speakText(VI['${id}']))">🔊</button> <button onclick="tog('${id}')">${k?'↩':'✓'}</button></div>${ex}</div>`}
+function tog(id){known.has(id)?known.delete(id):known.add(id);store.set('jpl_known',[...known]);render()}
+window.tog=tog;
+let cur={d:0,s:'am'};let view='day';
+function renderGs(){const q=($('#gq')||{value:''}).value.trim();
+ const all=Object.keys(G);
+ const hit=q?all.filter(id=>{const g=G[id];return [g.title,g.pattern,g.connection,(g.class||[]).map(c=>c.title+c.connection).join(' '),g.examples.map(e=>e.ja).join(' ')].join(' ').includes(q)}):[];
+ const fam=q?C.filter(f=>JSON.stringify(f.rows.map(r=>r.pat)).includes(q)):[];
+ $('#out').innerHTML=`<h2>🔍 查文法（共 ${all.length} 條）</h2><input id="gq" placeholder="輸入例句裡看不懂的句型，例如：ばかり、に限る、わけにはいかない" value="${esc(q)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">
+ ${q?`<div class="mut">找到 ${hit.length} 條文法${hit.length>12?'（先顯示前 12 條，請輸入更完整的字）':''}${fam.length?`；對照表有 ${fam.length} 組相關：${fam.map(f=>esc(f.title)).join('、')}`:''}</div>`:'<div class="mut">例句裡出現沒看過的句型時，把它（或例句片段）貼進來，會找出對應的文法卡片。找不到的話再去「📊 對照表」看同族比較。</div>'}
+ <div class="grid">${hit.slice(0,12).map(gcard).join('')}</div>`;
+ const e=$('#gq');e.oninput=()=>{const v=e.value;renderGs();const n=$('#gq');n.focus();n.setSelectionRange(v.length,v.length)}}
+function renderCmp(){preload(['r:C01:0']);const q=($('#q')||{value:''}).value.trim();const list=C.filter(f=>!q||JSON.stringify(f).includes(q));$('#out').innerHTML=`<h2>相似文法對照表（${C.length} 組）</h2><input id="q" placeholder="搜尋句型，例如：のに、そうだ、ために" value="${esc(q)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">${list.map(cmpHtml).join('')}`;$('#q').oninput=()=>{const v=$('#q').value;renderCmp();const e=$('#q');e.focus();e.setSelectionRange(v.length,v.length)}}
+function render(){if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
+ const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
+ document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
+ $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
+ if(!b){$('#out').innerHTML='<div class="card">今天沒有安排，自由複習 🙂</div>';return}
+ const n=b.n_paired||0;preload([...b.vocab.flatMap(i=>['w:'+i,'e:'+i]),...b.grammar.map(g=>'g:'+g+':0')]);
+ $('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}${b.kind==='review'?'（複習）':''}</h2>${b.listen?listenHtml(b.listen):''}${cmpFor(b.grammar).length?`<h2 class="h-c">📊 相似文法對照</h2>${cmpFor(b.grammar).map(f=>cmpHtml(f,true,b.grammar)).join('')}`:''}<h2 class="h-g">📘 文法 ${b.grammar.length}</h2><div class="grid">${b.grammar.map(gcard).join('')}</div>
+ ${(b.review||[]).length?`<div class="mut">複習：${b.review.map(i=>esc((G[i]?.title||'').replace(/^N\d文法\d+/,''))).join('、')}</div>`:''}
+ <h2 class="h-v">📝 單字 ${b.vocab.length}</h2><div class="card vgrid">${b.vocab.map((id,i)=>wrow(id,i<n)).join('')}</div>`}
+async function load(){
+ const buf=new Uint8Array(await (await fetch('data/bundle.enc')).arrayBuffer());
+ for(let tries=0;;tries++){
+  let pw=store.get('jpl_pw',null)||(tries===0?store.get('pw',null):null);
+  if(!pw){pw=prompt(tries?'密碼錯誤，請再試一次':'請輸入密碼');if(!pw)throw new Error('需要密碼')}
+  try{
+   const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+   const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
+   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
+  }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
+ }
+}
+async function init(){
+ [P,G,V,C]=await load();
+ V.forEach(e=>VI[e.id]=e);
+ $('#day').innerHTML=P.days.map((d,i)=>`<option value="${i}">Day ${d.day} (${d.date.slice(5)})</option>`).join('');
+ const h=location.hash.match(/d(\d+)-(am|pm)/);
+ cur.d=h?+h[1]-1:today();cur.s=h?h[2]:(new Date(Date.now()+8*3600e3).getUTCHours()>=15?'pm':'am');
+ $('#day').value=cur.d;
+ $('#day').onchange=e=>{cur.d=+e.target.value;render()};
+ $('#am').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='am';render()};$('#pm').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='pm';render()};$('#cmpbtn').onclick=()=>{view=view==='cmp'?'day':'cmp';$('#cmpbtn').classList.toggle('on',view==='cmp');$('#gsbtn').classList.remove('on');render()};$('#gsbtn').onclick=()=>{view=view==='gs'?'day':'gs';$('#gsbtn').classList.toggle('on',view==='gs');$('#cmpbtn').classList.remove('on');render()};
+ $('#hide').onchange=render;$('#rk').onclick=e=>{e.preventDefault();if(confirm('把所有「已熟悉」標記清掉？')){known.clear();store.set('jpl_known',[]);render()}};$('#lock').onclick=e=>{e.preventDefault();store.set('jpl_pw',null);store.set('pw',null);location.reload()};render();
+}
+init().catch(e=>{$('#out').textContent='載入失敗：'+e});
+</script>
+</body></html>
