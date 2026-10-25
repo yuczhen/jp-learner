@@ -173,6 +173,19 @@ def main():
         for k, it in enumerate(L):
             idx = k if len(L) <= 8 else round(k * (B - 1) / max(1, len(L) - 1))
             batches[min(idx, B - 1)]["listen"] = it["id"]
+        lf = ROOT / "data/listen_frozen.json"           # clips already sent stay where they were
+        if lf.exists():
+            fz = {int(k): v for k, v in json.loads(lf.read_text(encoding="utf8")).items()}
+            for b in batches[:max(fz) + 1]:
+                b.pop("listen", None)
+            for k, cid in fz.items():
+                batches[k]["listen"] = cid
+            rest = [it["id"] for it in L if it["id"] not in fz.values()]
+            free = list(range(max(fz) + 1, B))
+            for b in batches[max(fz) + 1:]:
+                b.pop("listen", None)
+            for k, cid in enumerate(rest):               # spread the remaining clips over the remaining batches
+                batches[free[round(k * (len(free) - 1) / max(1, len(rest) - 1))]]["listen"] = cid
         placed = {b.get("listen") for b in batches}
         spare = [it["id"] for it in L if it["id"] not in placed]      # more clips than batches -> use them on review days
     # review (titles of grammar from 2 batches earlier)
