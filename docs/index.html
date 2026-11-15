@@ -195,7 +195,7 @@ window.playKo=async(aid)=>{const btn=document.getElementById('kp-'+aid);try{
  try{speechSynthesis.cancel()}catch{}if(CUR){CUR.pause()}CUR=new Audio(LAU[aid]);CUR.controls=false;await CUR.play();btn.textContent='▶ 再播一次'}catch(e){btn.textContent='⚠ 無法播放'}}
 function koItem(it,sec){const q=esc(it.q||'').replace(/【([^】]+)】/g,'<u>$1</u>');
  const exp=esc(it.e).replace(/\n/g,'<br>');
- return `<div class="kq" id="k-${it.id}"><div class="kqn"><span class="lab2">${it.id}</span>${q}</div>
+ return `<div class="kq" id="k-${it.id}"><div class="kqn"><span class="lab2">${it.id}</span><span class="tag">${it.src||""}</span> ${q}</div>
  ${sec==='L'?`<div style="margin:6px 0"><button id="kp-${it.audio}" onclick="playKo('${it.audio}')">▶ 播放</button> <span class="mut">先聽、選好，再打開答案</span></div>`:''}
  ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${esc(x)}</button>`).join('')}
  <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${esc(it.c[it.a-1])}</div><div class="kexp">${exp}</div>
