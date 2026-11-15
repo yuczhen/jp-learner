@@ -26,3 +26,4 @@ listening/
 scripts/parse_class.py
 scripts/snap_cuts.py
 scripts/build_jlpt.py
+scripts/extract_ruby.py

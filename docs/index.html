@@ -193,11 +193,11 @@ window.playKo=async(aid)=>{const btn=document.getElementById('kp-'+aid);try{
  if(!LAU[aid]){btn.textContent='載入中…';const b=new Uint8Array(await (await fetch('data/j/'+aid+'.enc')).arrayBuffer());
   const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16));LAU[aid]=URL.createObjectURL(new Blob([raw],{type:'audio/mpeg'}))}
  try{speechSynthesis.cancel()}catch{}if(CUR){CUR.pause()}CUR=new Audio(LAU[aid]);CUR.controls=false;await CUR.play();btn.textContent='▶ 再播一次'}catch(e){btn.textContent='⚠ 無法播放'}}
-function koItem(it,sec){const q=esc(it.q||'').replace(/【([^】]+)】/g,'<u>$1</u>');
+function koItem(it,sec){const q=ruby(it.q||'').replace(/【([^】]+)】/g,'<u>$1</u>');
  const exp=esc(it.e).replace(/\n/g,'<br>');
  return `<div class="kq" id="k-${it.id}"><div class="kqn"><span class="lab2">${it.id}</span><span class="tag">${it.src||""}</span> ${q}</div>
  ${sec==='L'?`<div style="margin:6px 0"><button id="kp-${it.audio}" onclick="playKo('${it.audio}')">▶ 播放</button> <span class="mut">先聽、選好，再打開答案</span></div>`:''}
- ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${esc(x)}</button>`).join('')}
+ ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${ruby(x)}</button>`).join('')}
  <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${esc(it.c[it.a-1])}</div><div class="kexp">${exp}</div>
  ${sec==='L'&&it.script?`<details><summary>逐字稿（自動轉寫，可能有錯字）</summary>${it.script.map(l=>`<div class="ex"><div class="ja">${esc(l)}</div></div>`).join('')}</details>`:''}</details></div>`}
 function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card">尚無考古題資料。</div>';return}
@@ -207,7 +207,7 @@ function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card"
  for(const sec of set.sections){const ids=plan[sec.key]||[];if(!ids.length)continue;const items=ids.map(id=>sec.items.find(x=>x.id===id));
   h+=`<h2 class="h-l">${esc(sec.title)}（今日 ${items.length} 題）</h2>`;let lastG='',lastP='';
   for(const it of items){if(it.g!==lastG){h+=`<div class="kg">${esc(it.g)}</div>`;lastG=it.g}
-   if(it.p&&it.p!==lastP){h+=`<div class="kp">${esc(it.p).replace(/【(\d+)】/g,'<b>［$1］</b>')}</div>`;lastP=it.p}
+   if(it.p&&it.p!==lastP){h+=`<div class="kp">${ruby(it.p).replace(/【(\d+)】/g,'<b>［$1］</b>')}</div>`;lastP=it.p}
    h+=koItem(it,sec.key)}}
  out.innerHTML=h;$('#kodsel').onchange=e=>{koD=+e.target.value;renderKo();window.scrollTo(0,0)}}
 function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
