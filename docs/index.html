@@ -71,13 +71,20 @@ body:not([data-slot=am]) .lab2.w{color:#06121c}
 .pair{color:var(--ok)}
 a{color:var(--acc)}
 .rel a{margin-right:10px}
+
+.kq{margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.kqn{font-size:17px;line-height:1.7;margin-bottom:4px}.kqn u{text-decoration-thickness:2px;text-underline-offset:4px}
+.kch{display:block;width:100%;text-align:left;margin:5px 0;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg);font-size:16px;cursor:pointer;line-height:1.5}
+.kch.sel{outline:2px solid var(--acc)}.kch.ok{background:rgba(90,200,120,.28);border-color:var(--ok)}.kch.bad{background:rgba(240,90,90,.25);border-color:#e55}
+.kp{white-space:pre-wrap;line-height:1.9;padding:10px 12px;border-left:4px solid var(--acc);background:rgba(128,128,128,.12);border-radius:8px;margin:10px 0;font-size:16px}
+.kexp{margin-top:6px;line-height:1.85}.kg{margin:16px 0 4px;color:var(--c2);font-weight:700}
 </style>
 </head>
 <body><main>
 <h1>日檢JLPT每日學習 <span class="mut" id="cd"></span></h1>
 <div class="bar">
   <select id="day"></select>
-  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
+  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
   <label class="mut"><input type="checkbox" id="hide"> 隱藏已熟悉</label>
 </div>
 <div id="out"></div>
@@ -86,7 +93,7 @@ a{color:var(--acc)}
 <script>
 const $=s=>document.querySelector(s);
 const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let P,G,V,C=[],LS=[],VI={};
+let P,G,V,C=[],LS=[],VI={},KO=null,koD=0;
 const known=new Set(store.get('jpl_known',[]));
 const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const ruby=s=>esc(s).replace(/([一-鿿々ァ-ヶー]+)\(([^)]+)\)/g,'<ruby>$1<rt>$2</rt></ruby>');
@@ -176,7 +183,34 @@ function renderGs(){const q=($('#gq')||{value:''}).value.trim();
  <div class="grid">${hit.slice(0,12).map(gcard).join('')}</div>`;
  const e=$('#gq');e.oninput=()=>{const v=e.value;renderGs();const n=$('#gq');n.focus();n.setSelectionRange(v.length,v.length)}}
 function renderCmp(){preload(['r:C01:0']);const q=($('#q')||{value:''}).value.trim();const list=C.filter(f=>!q||JSON.stringify(f).includes(q));$('#out').innerHTML=`<h2>相似文法對照表（${C.length} 組）</h2><input id="q" placeholder="搜尋句型，例如：のに、そうだ、ために" value="${esc(q)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">${list.map(cmpHtml).join('')}`;$('#q').oninput=()=>{const v=$('#q').value;renderCmp();const e=$('#q');e.focus();e.setSelectionRange(v.length,v.length)}}
-function render(){if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
+
+function koDay(){if(!KO)return 0;const t=Math.floor((Date.now()+8*3600e3)/864e5)-Math.floor(new Date(KO.start+'T00:00:00Z')/864e5);return Math.max(0,Math.min(KO.days-1,t))}
+function koDate(i){const d=new Date(new Date(KO.start+'T00:00:00Z').getTime()+i*864e5);return (d.getUTCMonth()+1)+'-'+String(d.getUTCDate()).padStart(2,'0')}
+window.koPick=(id,i)=>{const q=document.getElementById('k-'+id);if(!q)return;q.querySelectorAll('.kch').forEach(b=>b.classList.toggle('sel',+b.dataset.i===i));q.dataset.sel=i}
+window.koOpen=(id,a,det)=>{if(!det.open)return;const q=document.getElementById('k-'+id);const sel=+q.dataset.sel||0;
+ q.querySelectorAll('.kch').forEach(b=>{const i=+b.dataset.i;b.classList.remove('ok','bad');if(i===a)b.classList.add('ok');else if(i===sel)b.classList.add('bad')})}
+window.playKo=async(aid)=>{const btn=document.getElementById('kp-'+aid);try{
+ if(!LAU[aid]){btn.textContent='載入中…';const b=new Uint8Array(await (await fetch('data/j/'+aid+'.enc')).arrayBuffer());
+  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16));LAU[aid]=URL.createObjectURL(new Blob([raw],{type:'audio/mpeg'}))}
+ try{speechSynthesis.cancel()}catch{}if(CUR){CUR.pause()}CUR=new Audio(LAU[aid]);CUR.controls=false;await CUR.play();btn.textContent='▶ 再播一次'}catch(e){btn.textContent='⚠ 無法播放'}}
+function koItem(it,sec){const q=esc(it.q||'').replace(/【([^】]+)】/g,'<u>$1</u>');
+ const exp=esc(it.e).replace(/\n/g,'<br>');
+ return `<div class="kq" id="k-${it.id}"><div class="kqn"><span class="lab2">${it.id}</span>${q}</div>
+ ${sec==='L'?`<div style="margin:6px 0"><button id="kp-${it.audio}" onclick="playKo('${it.audio}')">▶ 播放</button> <span class="mut">先聽、選好，再打開答案</span></div>`:''}
+ ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${esc(x)}</button>`).join('')}
+ <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${esc(it.c[it.a-1])}</div><div class="kexp">${exp}</div>
+ ${sec==='L'&&it.script?`<details><summary>逐字稿（自動轉寫，可能有錯字）</summary>${it.script.map(l=>`<div class="ex"><div class="ja">${esc(l)}</div></div>`).join('')}</details>`:''}</details></div>`}
+function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card">尚無考古題資料。</div>';return}
+ const set=KO.sets[0];const plan=KO.plan[koD];
+ let h=`<h2>📝 JLPT N3 考古題練習</h2><div class="mut">${esc(set.title)}（官網公開的N3樣題；共 ${KO.days} 天，每天四個大項各一些）</div>
+ <div style="margin:8px 0"><select id="kodsel">${KO.plan.map((_,i)=>`<option value="${i}" ${i===koD?'selected':''}>第 ${i+1} 天（${koDate(i)}）${i===koDay()?' · 今天':''}</option>`).join('')}</select></div>`;
+ for(const sec of set.sections){const ids=plan[sec.key]||[];if(!ids.length)continue;const items=ids.map(id=>sec.items.find(x=>x.id===id));
+  h+=`<h2 class="h-l">${esc(sec.title)}（今日 ${items.length} 題）</h2>`;let lastG='',lastP='';
+  for(const it of items){if(it.g!==lastG){h+=`<div class="kg">${esc(it.g)}</div>`;lastG=it.g}
+   if(it.p&&it.p!==lastP){h+=`<div class="kp">${esc(it.p).replace(/【(\d+)】/g,'<b>［$1］</b>')}</div>`;lastP=it.p}
+   h+=koItem(it,sec.key)}}
+ out.innerHTML=h;$('#kodsel').onchange=e=>{koD=+e.target.value;renderKo();window.scrollTo(0,0)}}
+function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
  $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
@@ -194,7 +228,7 @@ async function load(){
    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
-   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;return [d.plan,d.grammar,d.vocab,d.compare||[]];
   }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
  }
 }
@@ -207,6 +241,8 @@ async function init(){
  $('#day').value=cur.d;
  $('#day').onchange=e=>{cur.d=+e.target.value;render()};
  $('#am').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='am';render()};$('#pm').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='pm';render()};$('#cmpbtn').onclick=()=>{view=view==='cmp'?'day':'cmp';$('#cmpbtn').classList.toggle('on',view==='cmp');$('#gsbtn').classList.remove('on');render()};$('#gsbtn').onclick=()=>{view=view==='gs'?'day':'gs';$('#gsbtn').classList.toggle('on',view==='gs');$('#cmpbtn').classList.remove('on');render()};
+ $('#kobtn').onclick=()=>{view=view==='ko'?'day':'ko';koD=koDay();$('#kobtn').classList.toggle('on',view==='ko');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
+ ['am','pm','cmpbtn','gsbtn'].forEach(id=>{const f=$('#'+id).onclick;$('#'+id).onclick=e=>{$('#kobtn').classList.remove('on');f(e)}});
  $('#hide').onchange=render;$('#rk').onclick=e=>{e.preventDefault();if(confirm('把所有「已熟悉」標記清掉？')){known.clear();store.set('jpl_known',[]);render()}};$('#lock').onclick=e=>{e.preventDefault();store.set('jpl_pw',null);store.set('pw',null);location.reload()};render();
 }
 init().catch(e=>{$('#out').textContent='載入失敗：'+e});

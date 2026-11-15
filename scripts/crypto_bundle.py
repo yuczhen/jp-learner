@@ -59,6 +59,9 @@ def encrypt(src_dir, pw):
     ls_path = Path(src_dir) / "listening.json"
     if ls_path.exists():
         data["listening"] = json.loads(ls_path.read_text(encoding="utf8"))
+    jl_path = Path(src_dir) / "jlpt.json"
+    if jl_path.exists():
+        data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))
     ai_path = Path(src_dir) / "audio_index.json"          # clip id -> pack name
     if ai_path.exists():
         data["audio_index"] = json.loads(ai_path.read_text(encoding="utf8"))
