@@ -189,6 +189,11 @@ function koDate(i){const d=new Date(new Date(KO.start+'T00:00:00Z').getTime()+i*
 window.koPick=(id,i)=>{const q=document.getElementById('k-'+id);if(!q)return;q.querySelectorAll('.kch').forEach(b=>b.classList.toggle('sel',+b.dataset.i===i));q.dataset.sel=i}
 window.koOpen=(id,a,det)=>{if(!det.open)return;const q=document.getElementById('k-'+id);const sel=+q.dataset.sel||0;
  q.querySelectorAll('.kch').forEach(b=>{const i=+b.dataset.i;b.classList.remove('ok','bad');if(i===a)b.classList.add('ok');else if(i===sel)b.classList.add('bad')})}
+const LPIC={};
+async function koPics(){for(const im of document.querySelectorAll('img[data-pic]')){const id=im.dataset.pic;try{
+ if(!LPIC[id]){const b=new Uint8Array(await (await fetch('data/j/'+id+'.enc')).arrayBuffer());
+  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16));LPIC[id]=URL.createObjectURL(new Blob([raw],{type:'image/jpeg'}))}
+ im.src=LPIC[id]}catch(e){im.alt='圖片載入失敗'}}}
 window.playKo=async(aid)=>{const btn=document.getElementById('kp-'+aid);try{
  if(!LAU[aid]){btn.textContent='載入中…';const b=new Uint8Array(await (await fetch('data/j/'+aid+'.enc')).arrayBuffer());
   const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16));LAU[aid]=URL.createObjectURL(new Blob([raw],{type:'audio/mpeg'}))}
@@ -196,9 +201,10 @@ window.playKo=async(aid)=>{const btn=document.getElementById('kp-'+aid);try{
 function koItem(it,sec){const q=ruby(it.q||'').replace(/【([^】]+)】/g,'<u>$1</u>');
  const exp=esc(it.e).replace(/\n/g,'<br>');
  return `<div class="kq" id="k-${it.id}"><div class="kqn"><span class="lab2">${it.id}</span><span class="tag">${it.src||""}</span> ${q}</div>
+ ${it.pic?`<img data-pic="${it.pic}" alt="圖片載入中…" style="max-width:100%;width:560px;border-radius:8px;background:#fff;margin:6px 0;display:block">`:''}
  ${sec==='L'?`<div style="margin:6px 0"><button id="kp-${it.audio}" onclick="playKo('${it.audio}')">▶ 播放</button> <span class="mut">先聽、選好，再打開答案</span></div>`:''}
  ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${ruby(x)}</button>`).join('')}
- <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${esc(it.c[it.a-1])}</div><div class="kexp">${exp}</div>
+ <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${ruby(it.c[it.a-1])}</div><div class="kexp">${exp}</div>
  ${sec==='L'&&it.script?`<details><summary>逐字稿（自動轉寫，可能有錯字）</summary>${it.script.map(l=>`<div class="ex"><div class="ja">${esc(l)}</div></div>`).join('')}</details>`:''}</details></div>`}
 function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card">尚無考古題資料。</div>';return}
  const set=KO.sets[0];const plan=KO.plan[koD];
@@ -209,7 +215,7 @@ function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card"
   for(const it of items){if(it.g!==lastG){h+=`<div class="kg">${esc(it.g)}</div>`;lastG=it.g}
    if(it.p&&it.p!==lastP){h+=`<div class="kp">${ruby(it.p).replace(/【(\d+)】/g,'<b>［$1］</b>')}</div>`;lastP=it.p}
    h+=koItem(it,sec.key)}}
- out.innerHTML=h;$('#kodsel').onchange=e=>{koD=+e.target.value;renderKo();window.scrollTo(0,0)}}
+ out.innerHTML=h;koPics();$('#kodsel').onchange=e=>{koD=+e.target.value;renderKo();window.scrollTo(0,0)}}
 function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
