@@ -63,6 +63,12 @@ def encrypt(src_dir, pw):
     ls_path = Path(src_dir) / "listening.json"
     if ls_path.exists():
         data["listening"] = json.loads(ls_path.read_text(encoding="utf8"))
+        lc_path = Path(src_dir) / "listen_choices.json"       # answer options for the listening questions
+        if lc_path.exists():
+            lc = json.loads(lc_path.read_text(encoding="utf8"))
+            for it in data["listening"]:
+                if it["id"] in lc:
+                    it["c"], it["a"] = lc[it["id"]]["c"], lc[it["id"]]["a"]
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))
