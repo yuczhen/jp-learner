@@ -83,9 +83,9 @@ def encrypt(src_dir, pw):
         ex = json.loads(ex_path.read_text(encoding="utf8"))
         for e in data["vocab"]:
             if e.get("ex"):
-                e["ex"] = {"ja": _clean(e["ex"]["ja"]), "ruby": _clean(e["ex"]["ruby"]), "zh": e["ex"]["zh"]}
+                e["ex"] = {"ja": _clean(e["ex"]["ja"]), "ruby": _clean(e["ex"]["ruby"]), "zh": e["ex"]["zh"], "src": e["ex"].get("src", "")}
             elif e["id"] in ex:
-                e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"]}
+                e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"], "src": ex[e["id"]].get("src", "")}
     for g in data["grammar"].values():
         for x in g["examples"]:
             x["ruby"] = _kata(x["ruby"])

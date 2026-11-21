@@ -170,7 +170,7 @@ function gcard(id){const g=G[id];if(!g)return'';
  ${detail.trim()?`<details class="mo"><summary>詳細說明・接續・更多</summary>${detail}</details>`:''}</div>`}
 function wrow(id,paired){const e=VI[id];if(!e)return'';const k=known.has(id);if(k&&$('#hide').checked)return'';
  const w=e.word.replace(/'/g,'');
- const ex=e.ex?`<div class="vex"><span class="ja">${ruby(e.ex.ruby)}</span> <button onclick="playClip('e:${id}',kanaOf(VI['${id}'].ex.ruby))">🔊</button><div class="zh">${esc(e.ex.zh)}</div></div>`:'';
+ const ex=e.ex?`<div class="vex"><span class="ja">${ruby(e.ex.ruby)}</span> <button onclick="playClip('e:${id}',kanaOf(VI['${id}'].ex.ruby))">🔊</button><div class="zh">${e.ex.zh?esc(e.ex.zh):'（原文無中譯）'} ${e.ex.src?`<span class="tag">出處：${esc(e.ex.src)}</span>`:''}</div></div>`:'';
  return `<div class="w ${k?'known':''}" data-id="${id}"><div class="jp">${esc(e.word)}${paired?' <span class="pair" title="出現在今日文法例句">●</span>':''}<div class="mut">${esc(e.reading)} ・ ${esc(e.romaji)}</div></div>
  <div class="gl">${esc(e.gloss)} <span class="tag">${e.level}</span></div>
  <div class="btns"><button onclick="playClip('w:${id}',speakText(VI['${id}']))">🔊</button> <button onclick="tog('${id}')">${k?'↩':'✓'}</button></div>${ex}</div>`}
