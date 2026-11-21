@@ -82,6 +82,9 @@ def encrypt(src_dir, pw):
         dq_path = Path(src_dir) / "diff_quiz.json"         # blanks of sigure's own marked keywords
         if dq_path.exists():
             data["dquiz"] = [q for q in json.loads(dq_path.read_text(encoding="utf8")) if q["slug"] in used]
+    gq_path = Path(src_dir) / "gram_quiz.json"             # 相似文法練習 (blanks of sigure's marked keywords)
+    if gq_path.exists():
+        data["gquiz"] = json.loads(gq_path.read_text(encoding="utf8"))
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))

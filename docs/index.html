@@ -106,7 +106,7 @@ const kanaOf=s=>String(s||'').replace(/[一-鿿々ァ-ヶー]+\(([^)]+)\)/g,'$1'
 let JV=null;
 function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));if(!vs.length)return null;
  for(const re of [/Kyoko|Otoya|O-Ren|Hattori/i,/Google|Nanami|Haruka|Ayumi/i])for(const v of vs)if(re.test(v.name))return v;return vs[0]}
-let DF={},DM={},DQ=[],dqAll=false,dqSet=null;let TP=null,tpK='all',tpQ='',KEY=null,AIDX={},PK={},CUR=null;
+let DF={},DM={},DQ=[],GQ=[],dqAll=false,dqSet=null,dqMode='g';let TP=null,tpK='all',tpQ='',KEY=null,AIDX={},PK={},CUR=null;
 function ensurePack(name){if(PK[name])return PK[name];
  PK[name]=fetch('data/a/'+name+'.enc').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(async ab=>{
   const b=new Uint8Array(ab);const raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16)));
@@ -148,13 +148,13 @@ function listenHtml(id){const L=LS.find(x=>x.id===id);if(!L)return'';
  <details${L.qs?` ontoggle="lopen('${L.id}',this)"`:''}><summary>${L.qs?'看答案＋':''}逐字稿</summary>${(L.qs||[]).map((q,k)=>`<div class="abox"><span class="lab ok">答案${L.qs.length>1?(k+1):''}</span>${q.a}．${ruby(q.c[q.a-1])}</div>${q.e?`<div class="note">${esc(q.e)}</div>`:''}`).join('')}${L.lines.map(l=>`<div class="ex"><div class="ja">${ruby(l.ruby)}</div>${l.zh?`<div class="zh">${esc(l.zh)}</div>`:''}</div>`).join('')}${L.ans?`<div class="abox"><span class="lab ok">${L.qs?'說明':'內容重點'}</span>${esc(L.ans)}</div>`:''}</details>
  ${L.notes.length?`<details><summary>重點文法・單字</summary>${L.notes.map(noteHtml).join('')}</details>`:''}</div>`}
 function cmpTable(f,idxs,today){return `<div class="tw"><table class="cmp"><tr><th>句型</th><th>接續</th><th>意思</th><th>例句</th></tr>${idxs.map(ri=>{const r=f.rows[ri];return `<tr class="${today&&today.has(ri)?'today':''}"><td class="k" data-label="句型">${today&&today.has(ri)?'★ ':''}${esc(r.pat)}</td><td data-label="接續">${esc(r.conn)}</td><td data-label="意思">${esc(r.mean)}</td><td data-label="例句">${r.ja?ruby(r.ruby)+` <button onclick="playClip('r:${f.id}:${ri}','${kanaOf(r.ruby||r.ja).replace(/'/g,"")}')">🔊</button><div class="mut">${esc(r.zh)}</div>`:''}</td></tr>`}).join('')}</table></div>`}
-function cmpHtml(f,op,ids){const all=f.rows.map((_,i)=>i);
+function cmpHtml(f,op,ids,prac){const all=f.rows.map((_,i)=>i);const pq=prac?GQ.filter(q=>q.fam===f.id):[];const pr=pq.length?`<details class="mo"><summary>🎯 練習 ${pq.length} 題</summary>${dqHtml(pq)}</details>`:'';
  const hit=ids?all.filter(i=>(f.rows[i].ids||[]).some(x=>ids.includes(x))):[];
  const key=`<div class="mut" style="margin:6px 0">${esc(f.key||'')}</div>`;
  const note=f.note?`<div class="note">${esc(f.note)}</div>`:'';
- if(!hit.length||hit.length===all.length)return `<details class="cmpd"${op===true?' open':''}><summary>📊 ${esc(f.title)}</summary>${key}${cmpTable(f,all)}${note}</details>`;
+ if(!hit.length||hit.length===all.length)return `<details class="cmpd"${op===true?' open':''}><summary>📊 ${esc(f.title)}</summary>${key}${cmpTable(f,all)}${note}${pr}</details>`;
  const rest=all.filter(i=>!hit.includes(i));
- return `<details class="cmpd"${op===true?' open':''}><summary>📊 ${esc(f.title)} <span class="tag">★ 今日 ${hit.length} 條</span></summary>${key}${cmpTable(f,hit,new Set(hit))}<details class="cmpo"><summary>其他相似句型（${rest.length}）— 要比較再點開</summary>${cmpTable(f,rest)}</details>${note}</details>`}
+ return `<details class="cmpd"${op===true?' open':''}><summary>📊 ${esc(f.title)} <span class="tag">★ 今日 ${hit.length} 條</span></summary>${key}${cmpTable(f,hit,new Set(hit))}<details class="cmpo"><summary>其他相似句型（${rest.length}）— 要比較再點開</summary>${cmpTable(f,rest)}</details>${note}${pr}</details>`}
 function cmpFor(ids){return C.filter(f=>f.members.some(m=>ids.includes(m)))}
 function exhtml(list,n,pfx,start){start=start||0;return list.slice(start,n).map((e,k)=>{const i=k+start;return `<div class="ex"><div class="ja">${ruby(e.ruby)} <button onclick="playClip('${pfx||''}${i}','${kanaOf(e.ruby||e.ja).replace(/'/g,"")}')">🔊</button></div><div class="zh">${esc(e.zh)}</div></div>`}).join('')}
 function tbl(t){return `<div class="tw"><table class="rt"><tr>${t.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i==0?'k':''}" data-label="${esc(t.head[i]||'')}">${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`}
@@ -190,7 +190,7 @@ function renderGs(){const q=($('#gq')||{value:''}).value.trim();
  ${q?`<div class="mut">找到 ${hit.length} 條文法${hit.length>12?'（先顯示前 12 條，請輸入更完整的字）':''}${fam.length?`；對照表有 ${fam.length} 組相關：${fam.map(f=>esc(f.title)).join('、')}`:''}</div>`:'<div class="mut">例句裡出現沒看過的句型時，把它（或例句片段）貼進來，會找出對應的文法卡片。找不到的話再去「📊 對照表」看同族比較。</div>'}
  <div class="grid">${hit.slice(0,12).map(gcard).join('')}</div>`;
  const e=$('#gq');e.oninput=()=>{const v=e.value;renderGs();const n=$('#gq');n.focus();n.setSelectionRange(v.length,v.length)}}
-function renderCmp(){preload(['r:C01:0']);const q=($('#q')||{value:''}).value.trim();const list=C.filter(f=>!q||JSON.stringify(f).includes(q));$('#out').innerHTML=`<h2>相似文法對照表（${C.length} 組）</h2><input id="q" placeholder="搜尋句型，例如：のに、そうだ、ために" value="${esc(q)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">${list.map(cmpHtml).join('')}`;$('#q').oninput=()=>{const v=$('#q').value;renderCmp();const e=$('#q');e.focus();e.setSelectionRange(v.length,v.length)}}
+function renderCmp(){DQX=[];preload(['r:C01:0']);const q=($('#q')||{value:''}).value.trim();const list=C.filter(f=>!q||JSON.stringify(f).includes(q));$('#out').innerHTML=`<h2>相似文法對照表（${C.length} 組）</h2><input id="q" placeholder="搜尋句型，例如：のに、そうだ、ために" value="${esc(q)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">${list.map(f=>cmpHtml(f,false,null,true)).join('')}`;$('#q').oninput=()=>{const v=$('#q').value;renderCmp();const e=$('#q');e.focus();e.setSelectionRange(v.length,v.length)}}
 
 function koDay(){if(!KO)return 0;const t=Math.floor((Date.now()+8*3600e3)/864e5)-Math.floor(new Date(KO.start+'T00:00:00Z')/864e5);return Math.max(0,Math.min(KO.days-1,t))}
 function koDate(i){const d=new Date(new Date(KO.start+'T00:00:00Z').getTime()+i*864e5);return (d.getUTCMonth()+1)+'-'+String(d.getUTCDate()).padStart(2,'0')}
@@ -269,18 +269,22 @@ function diffHtml(slug,quiz){const a=DF[slug];if(!a)return'';const qs=quiz?DQ.fi
  return `<details class="cmpd"><summary>⚖️ ${esc(a.title)}${qs.length?` <span class="tag">練習 ${qs.length} 題</span>`:''}</summary><div class="dfb">${a.html}</div>
  ${a.vip?`<div class="mut" style="margin:8px 0">（後半段是時雨會員內容）<a target="_blank" rel="noopener" href="${a.url}">到時雨看全文</a></div>`:''}
  ${qs.length?`<details class="mo"><summary>🎯 練習 ${qs.length} 題</summary>${dqHtml(qs)}</details>`:''}</details>`}
-function dayDiffs(day,slot){const l=DM[day.date+'|'+slot]||[];return l.length?`<h2 class="h-c">⚖️ 易混比較</h2>${l.map(s=>diffHtml(s,true)).join('')}`:''}
+function dayDiffs(day,slot,b){const l=DM[day.date+'|'+slot]||[];const gq=b?GQ.filter(q=>b.grammar.includes(q.gid)):[];
+ return (gq.length?`<h2 class="h-c">🎯 相似文法練習</h2><details class="cmpd"><summary>今天的句型 vs 同組易混句型（${gq.length} 題）</summary>${dqHtml(gq)}</details>`:'')+(l.length?`<h2 class="h-c">⚖️ 易混比較</h2>${l.map(s=>diffHtml(s,true)).join('')}`:'')}
+function learnedGids(){const now=P.days[today()].date,out=new Set();P.days.forEach(d=>{if(d.date<=now)d.batches.forEach(b=>(b.grammar||[]).forEach(g=>out.add(g)))});return out}
 function learnedSlugs(){const now=P.days[today()].date,out=new Set();for(const k in DM){if(k.slice(0,10)<=now)DM[k].forEach(s=>out.add(s))}return out}
 let dqQ='';
 function renderDq(){DQX=[];const out=$('#out');const ok=dqAll?null:learnedSlugs();
- const pool=DQ.filter(q=>!ok||ok.has(q.slug));
- if(!dqSet||dqSet.all!==dqAll){const a=[...pool];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}dqSet={all:dqAll,list:a.slice(0,10)}}
+ const okg=dqAll?null:learnedGids();const pool=dqMode==='g'?GQ.filter(q=>!okg||okg.has(q.gid)):DQ.filter(q=>!ok||ok.has(q.slug));
+ if(!dqSet||dqSet.all!==dqAll||dqSet.mode!==dqMode){const a=[...pool];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}dqSet={all:dqAll,mode:dqMode,list:a.slice(0,10)}}
  const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>(!ok||ok.has(s))&&(!q||(DF[s].title+DF[s].terms.join('')).includes(q)));
  out.innerHTML=`<h2>🎯 易混練習</h2>
+ <div style="margin:8px 0"><button class="dqm ${dqMode==='g'?'on':''}" data-m="g">相似文法</button> <button class="dqm ${dqMode==='d'?'on':''}" data-m="d">單字・用法（時雨差別文章）</button></div>
  <div style="margin:8px 0"><button class="dqs ${dqAll?'':'on'}" data-a="0">到今天學過的</button> <button class="dqs ${dqAll?'on':''}" data-a="1">全部</button> <button id="dqnew">🔀 換一組</button> <span class="mut">題庫 ${pool.length} 題</span></div>
  ${dqHtml(dqSet.list)}
  <h2 class="h-c">⚖️ 易混比較（${arts.length} 篇）</h2><input id="dqq" placeholder="搜尋，例如：ために、から、気分" value="${esc(dqQ)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">
  ${arts.map(s=>diffHtml(s,true)).join('')}`;
+ out.querySelectorAll('.dqm').forEach(b=>b.onclick=()=>{dqMode=b.dataset.m;renderDq()});
  out.querySelectorAll('.dqs').forEach(b=>b.onclick=()=>{dqAll=b.dataset.a==='1';renderDq()});
  $('#dqnew').onclick=()=>{dqSet=null;renderDq();window.scrollTo(0,0)};
  const qi=$('#dqq');qi.oninput=e=>{dqQ=e.target.value;const p=qi.selectionStart;renderDq();const n=$('#dqq');n.focus();n.setSelectionRange(p,p)}}
@@ -290,10 +294,10 @@ function render(){DQX=[];if(view==='dq'){document.body.dataset.slot=cur.s;return
  $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
  if(!b){$('#out').innerHTML='<div class="card">今天沒有安排，自由複習 🙂</div>';return}
  const n=b.n_paired||0;preload([...b.vocab.flatMap(i=>['w:'+i,'e:'+i]),...b.grammar.map(g=>'g:'+g+':0')]);
- if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${(b.key||[]).length?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note cmpn">${ruby(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}${dayDiffs(day,b.slot)}`;return}
+ if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${(b.key||[]).length?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note cmpn">${ruby(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}${dayDiffs(day,b.slot,b)}`;return}
  $('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}${b.kind==='review'?'（複習）':''}</h2>${b.listen?listenHtml(b.listen):''}${cmpFor(b.grammar).length?`<h2 class="h-c">📊 相似文法對照</h2>${cmpFor(b.grammar).map(f=>cmpHtml(f,true,b.grammar)).join('')}`:''}<h2 class="h-g">📘 文法 ${b.grammar.length}</h2><div class="grid">${b.grammar.map(gcard).join('')}</div>
  ${(b.review||[]).length?`<div class="mut">複習：${b.review.map(i=>esc((G[i]?.title||'').replace(/^N\d文法\d+/,''))).join('、')}</div>`:''}
- <h2 class="h-v">📝 單字 ${b.vocab.length}</h2>${vgroupHtml(b.vocab,n)}${dayDiffs(day,b.slot)}`}
+ <h2 class="h-v">📝 單字 ${b.vocab.length}</h2>${vgroupHtml(b.vocab,n)}${dayDiffs(day,b.slot,b)}`}
 async function load(){
  const buf=new Uint8Array(await (await fetch('data/bundle.enc')).arrayBuffer());
  for(let tries=0;;tries++){
@@ -303,7 +307,7 @@ async function load(){
    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
-   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];GQ=d.gquiz||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
   }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
  }
 }
