@@ -48,7 +48,7 @@ body:not([data-slot=am]) .lab2.w{color:#06121c}
 .nh{margin-top:10px;font-weight:700;color:var(--g3)}
 .mo{margin-top:8px}.mo>summary{cursor:pointer;color:var(--c2);font-weight:600;font-size:14px}
 .cmpd{margin:8px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:8px 12px}.cmpd summary{cursor:pointer;font-weight:600;color:var(--acc)}table.cmp td,table.cmp th{font-size:14px}td.tip{color:var(--acc);min-width:110px}
-.cls{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.12);border:1px solid var(--line)}.clsh{font-weight:600;color:var(--acc)}.note{margin-top:6px;font-size:14px;color:var(--mut)}.card.co{border-left-width:5px}
+.cls{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.12);border:1px solid var(--line)}.clsh{font-weight:600;color:var(--acc)}.note{margin-top:6px;font-size:14px;color:var(--mut)}.card.co{border-left-width:5px}.cmpn{font-size:16.5px;line-height:1.9}
 .tw{overflow-x:auto;margin:8px 0}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}th{background:rgba(127,127,127,.15)}td.k{font-weight:600;white-space:nowrap}
 @media(max-width:700px){
  .tw{overflow:visible}
@@ -224,13 +224,13 @@ function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card"
    h+=koItem(it,sec.key)}}
  out.innerHTML=h;koPics();$('#kodsel').onchange=e=>{koD=+e.target.value;renderKo();window.scrollTo(0,0)}}
 function ctbl(t){return `<div class="tw"><table class="rt"><tr>${t.head.map(h=>`<th>${ruby(h)}</th>`).join('')}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i==0?'k':''}" data-label="${esc(String(t.head[i]||'').replace(/\([^)]*\)/g,''))}">${ruby(c)}</td>`).join('')}</tr>`).join('')}</table></div>`}
-function blocksHtml(b){return b.blocks.map(bl=>{const tip=bl.tip?`<div class="mut" style="margin:4px 0 8px">${esc(bl.tip)}</div>`:'';
- if(bl.t==='note')return `<div class="card co"><div class="pat">${esc(bl.title)}</div>${(bl.lines||[]).map(l=>`<div class="note">${esc(l)}</div>`).join('')}${(bl.tables||[]).length?`<details class="mo"><summary>展開對照表</summary>${bl.tables.map(ctbl).join('')}</details>`:''}</div>`;
+function blocksHtml(b){return b.blocks.map(bl=>{const tip=bl.tip?`<div class="mut cmpn" style="margin:4px 0 8px">${ruby(bl.tip)}</div>`:'';
+ if(bl.t==='note')return `<div class="card co"><div class="pat">${esc(bl.title)}</div>${(bl.lines||[]).map(l=>`<div class="note cmpn">${ruby(l)}</div>`).join('')}${(bl.tables||[]).length?`<details class="mo"><summary>展開對照表</summary>${bl.tables.map(ctbl).join('')}</details>`:''}</div>`;
  if(bl.t==='cmpauto'){const fs=cmpFor(bl.ids);return fs.length?`<h2 class="h-c">${esc(bl.title)}</h2>${fs.map(f=>cmpHtml(f,true,bl.ids)).join('')}`:''}
  if(bl.t==='table')return `<h2 class="h-c">${esc(bl.title)}</h2>${tip}${ctbl(bl)}`;
  if(bl.t==='grammar')return `<h2 class="h-g">${esc(bl.title)}</h2>${tip}<div class="grid">${bl.ids.map(gcard).join('')}</div>`;
  if(bl.t==='vocab'){if(!bl.ids.length)return `<h2 class="h-v">${esc(bl.title)}</h2>${tip}`;
-  return `<details class="vg"${bl.star?' open':''}><summary><b>${esc(bl.title)}</b>${bl.star?' <span class="tag">★ 重點</span>':''} <span class="mut">${bl.ids.length} 字</span></summary>${tip}<div class="card vgrid">${bl.ids.map(id=>wrow(id,false)).join('')}</div>${(bl.cmp||[]).map(c=>`<div class="note"><span class="lab2 g">比較</span>${esc(c)}</div>`).join('')}</details>`}
+  return `<details class="vg"${bl.star?' open':''}><summary><b>${esc(bl.title)}</b>${bl.star?' <span class="tag">★ 重點</span>':''} <span class="mut">${bl.ids.length} 字</span></summary>${tip}<div class="card vgrid">${bl.ids.map(id=>wrow(id,false)).join('')}</div>${(bl.cmp||[]).map(c=>`<div class="note cmpn"><span class="lab2 g">比較</span>${ruby(c)}</div>`).join('')}</details>`}
  return''}).join('')}
 function vgroupHtml(ids,n){const kan=id=>{const w=(VI[id]?.word||'').replace(/[（(].*?[）)]/g,'');return [...new Set(w.match(/[一-鿿々]/g)||[])]};
  const map={};ids.forEach(id=>kan(id).forEach(c=>(map[c]=map[c]||[]).push(id)));
@@ -245,7 +245,7 @@ function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return render
  $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
  if(!b){$('#out').innerHTML='<div class="card">今天沒有安排，自由複習 🙂</div>';return}
  const n=b.n_paired||0;preload([...b.vocab.flatMap(i=>['w:'+i,'e:'+i]),...b.grammar.map(g=>'g:'+g+':0')]);
- if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${b.key?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note">${esc(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}`;return}
+ if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${b.key?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note cmpn">${ruby(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}`;return}
  $('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}${b.kind==='review'?'（複習）':''}</h2>${b.listen?listenHtml(b.listen):''}${cmpFor(b.grammar).length?`<h2 class="h-c">📊 相似文法對照</h2>${cmpFor(b.grammar).map(f=>cmpHtml(f,true,b.grammar)).join('')}`:''}<h2 class="h-g">📘 文法 ${b.grammar.length}</h2><div class="grid">${b.grammar.map(gcard).join('')}</div>
  ${(b.review||[]).length?`<div class="mut">複習：${b.review.map(i=>esc((G[i]?.title||'').replace(/^N\d文法\d+/,''))).join('、')}</div>`:''}
  <h2 class="h-v">📝 單字 ${b.vocab.length}</h2>${vgroupHtml(b.vocab,n)}`}
