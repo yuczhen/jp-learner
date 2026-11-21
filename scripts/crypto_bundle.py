@@ -68,7 +68,7 @@ def encrypt(src_dir, pw):
             lc = json.loads(lc_path.read_text(encoding="utf8"))
             for it in data["listening"]:
                 if it["id"] in lc:
-                    it["c"], it["a"] = lc[it["id"]]["c"], lc[it["id"]]["a"]
+                    it.update({k: v for k, v in lc[it["id"]].items() if k in ("qs", "c", "a")})
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))
