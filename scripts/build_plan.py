@@ -214,6 +214,9 @@ def main():
             day["batches"].append(rb)
     plan = {"start": START.isoformat(), "exam": EXAM.isoformat(), "learn_days": nlearn,
             "total_days": TOTAL_DAYS, "batches": B, "days": days}
+    sys.path.insert(0, str(Path(__file__).parent))
+    from apply_curated import apply as _apply_curated
+    print("curated batches applied:", _apply_curated(plan))
     (ROOT / "data/plan.json").write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf8")
     allv = {i for b in batches for i in b["vocab"]}
     print(f"batches={B} learn_days={nlearn} total_days={TOTAL_DAYS}")

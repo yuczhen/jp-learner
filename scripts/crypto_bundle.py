@@ -56,6 +56,10 @@ def encrypt(src_dir, pw):
     cmp_path = Path(src_dir) / "compare.json"           # similar-grammar comparison tables
     if cmp_path.exists():
         data["compare"] = json.loads(cmp_path.read_text(encoding="utf8"))
+    vx_path = Path(src_dir) / "vocab_extra.json"          # hand-picked extra words (curated batches)
+    if vx_path.exists():
+        have = {e["id"] for e in data["vocab"]}
+        data["vocab"] += [e for e in json.loads(vx_path.read_text(encoding="utf8")) if e["id"] not in have]
     ls_path = Path(src_dir) / "listening.json"
     if ls_path.exists():
         data["listening"] = json.loads(ls_path.read_text(encoding="utf8"))
@@ -69,7 +73,9 @@ def encrypt(src_dir, pw):
     if ex_path.exists():                                   # one example sentence per vocab word
         ex = json.loads(ex_path.read_text(encoding="utf8"))
         for e in data["vocab"]:
-            if e["id"] in ex:
+            if e.get("ex"):
+                e["ex"] = {"ja": _clean(e["ex"]["ja"]), "ruby": _clean(e["ex"]["ruby"]), "zh": e["ex"]["zh"]}
+            elif e["id"] in ex:
                 e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"]}
     for g in data["grammar"].values():
         for x in g["examples"]:

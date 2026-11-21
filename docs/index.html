@@ -209,6 +209,10 @@ function koItem(it,sec){const q=ruby(it.q||'').replace(/【([^】]+)】/g,'<u>$1
 function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card">尚無考古題資料。</div>';return}
  const set=KO.sets[0];const plan=KO.plan[koD];
  let h=`<h2>📝 JLPT N3 考古題練習</h2><div class="mut">${esc(set.title)}（官網公開的N3樣題；共 ${KO.days} 天，每天四個大項各一些）</div>
+ <details class="mo" style="margin:8px 0"><summary>💡 抓尼的解題技巧（閱讀・聽力）</summary>
+ <div class="note"><b>閱讀 Step1</b>：先看題目，<u>絕對不要先看選項</u>（容易腦補）。<br><b>Step2</b>：看一段寫一題——題目是依段落順序出的，一般很少「第一題答案在第三段」。</div>
+ <div class="note"><b>文體</b>：丁寧體（です・ます）／普通體（だ）／文體（である，論文・新聞）。文章常把「ます形」改成「ます形代替て形」（例：沈黙し、～）和「である」。</div>
+ <div class="note"><b>聽力題型</b>：問題1＝課題理解（まず／これから何を～）→ 考前後順序；問題2＝重點理解（どうして・なぜ）→ 先看選項抓 hint；問題3＝概要理解（何について・一番～）；問題4＝語言表達（看圖）；問題5＝即時應答。</div></details>
  <div style="margin:8px 0"><select id="kodsel">${KO.plan.map((_,i)=>`<option value="${i}" ${i===koD?'selected':''}>第 ${i+1} 天（${koDate(i)}）${i===koDay()?' · 今天':''}</option>`).join('')}</select></div>`;
  for(const sec of set.sections){const ids=plan[sec.key]||[];if(!ids.length)continue;const items=ids.map(id=>sec.items.find(x=>x.id===id));
   h+=`<h2 class="h-l">${esc(sec.title)}（今日 ${items.length} 題）</h2>`;let lastG='',lastP='';
@@ -216,12 +220,19 @@ function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card"
    if(it.p&&it.p!==lastP){h+=`<div class="kp">${ruby(it.p).replace(/【(\d+)】/g,'<b>［$1］</b>')}</div>`;lastP=it.p}
    h+=koItem(it,sec.key)}}
  out.innerHTML=h;koPics();$('#kodsel').onchange=e=>{koD=+e.target.value;renderKo();window.scrollTo(0,0)}}
+function ctbl(t){return `<div class="tw"><table class="rt"><tr>${t.head.map(h=>`<th>${ruby(h)}</th>`).join('')}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i==0?'k':''}" data-label="${esc(String(t.head[i]||'').replace(/\([^)]*\)/g,''))}">${ruby(c)}</td>`).join('')}</tr>`).join('')}</table></div>`}
+function blocksHtml(b){return b.blocks.map(bl=>{const tip=bl.tip?`<div class="mut" style="margin:4px 0 8px">${esc(bl.tip)}</div>`:'';
+ if(bl.t==='note')return `<div class="card co"><div class="pat">${esc(bl.title)}</div>${(bl.lines||[]).map(l=>`<div class="note">${esc(l)}</div>`).join('')}${(bl.tables||[]).map(ctbl).join('')}</div>`;
+ if(bl.t==='table')return `<h2 class="h-c">${esc(bl.title)}</h2>${tip}${ctbl(bl)}`;
+ if(bl.t==='grammar')return `<h2 class="h-g">${esc(bl.title)}</h2>${tip}<div class="grid">${bl.ids.map(gcard).join('')}</div>`;
+ if(bl.t==='vocab')return `<h2 class="h-v">${esc(bl.title)}</h2>${tip}<div class="card vgrid">${bl.ids.map(id=>wrow(id,false)).join('')}</div>`;return''}).join('')}
 function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
  $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
  if(!b){$('#out').innerHTML='<div class="card">今天沒有安排，自由複習 🙂</div>';return}
  const n=b.n_paired||0;preload([...b.vocab.flatMap(i=>['w:'+i,'e:'+i]),...b.grammar.map(g=>'g:'+g+':0')]);
+ if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}`;return}
  $('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}${b.kind==='review'?'（複習）':''}</h2>${b.listen?listenHtml(b.listen):''}${cmpFor(b.grammar).length?`<h2 class="h-c">📊 相似文法對照</h2>${cmpFor(b.grammar).map(f=>cmpHtml(f,true,b.grammar)).join('')}`:''}<h2 class="h-g">📘 文法 ${b.grammar.length}</h2><div class="grid">${b.grammar.map(gcard).join('')}</div>
  ${(b.review||[]).length?`<div class="mut">複習：${b.review.map(i=>esc((G[i]?.title||'').replace(/^N\d文法\d+/,''))).join('、')}</div>`:''}
  <h2 class="h-v">📝 單字 ${b.vocab.length}</h2><div class="card vgrid">${b.vocab.map((id,i)=>wrow(id,i<n)).join('')}</div>`}

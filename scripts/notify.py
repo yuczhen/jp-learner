@@ -51,6 +51,26 @@ def compose(plan, G, V, day, batch, site, compare=()):
     kind = "複習" if batch["kind"] == "review" else "新"
     out = [f"{dot*4} {sun} <b>{label}</b> {sun} {dot*4}",
            f"<b>Day {day['day']}/{plan['total_days']}</b>（{kind}）· {h(batch['theme'])}"]
+    if batch.get("blocks"):                         # curated (organised) batch: show it group by group
+        for bl in batch["blocks"]:
+            t = h(bl["title"])
+            if bl["t"] == "note":
+                out.append(f"\n{dot} <b>{t}</b>")
+                out += [h(x) for x in bl.get("lines", [])[:2]]
+            elif bl["t"] == "grammar":
+                out.append(f"\n{dot} <b>{t}</b>")
+                out += [f"{i}. {h(short_title(G[g]['title'])[:44])}" for i, g in enumerate(bl["ids"], 1)]
+            elif bl["t"] == "table":
+                out.append(f"\n⚠️ <b>{t}</b>")
+            elif bl["t"] == "vocab":
+                out.append(f"\n{dot} <b>{t}</b>")
+                if bl.get("tip"): out.append("💡 " + h(bl["tip"]))
+                for wid in bl["ids"]:
+                    e = vi[wid]
+                    out.append(f"• {h(e['word'])}　{h(e['reading'])}　{h(e['gloss'][:20])}")
+        if site:
+            out.append(f"\n🔗 完整表格・例句・發音：{site}#d{day['day']}-{batch['slot']}")
+        return "\n".join(out)[:4000]
     out.append(f"\n{dot} <b>文法</b>（{len(batch['grammar'])}）")
     for i, gid in enumerate(batch["grammar"], 1):
         g = G[gid]
