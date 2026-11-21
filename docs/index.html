@@ -228,7 +228,7 @@ function blocksHtml(b){return b.blocks.map(bl=>{const tip=bl.tip?`<div class="mu
  if(bl.t==='note')return `<div class="card co"><div class="pat">${esc(bl.title)}</div>${(bl.lines||[]).map(l=>`<div class="note">${esc(l)}</div>`).join('')}${(bl.tables||[]).map(ctbl).join('')}</div>`;
  if(bl.t==='table')return `<h2 class="h-c">${esc(bl.title)}</h2>${tip}${ctbl(bl)}`;
  if(bl.t==='grammar')return `<h2 class="h-g">${esc(bl.title)}</h2>${tip}<div class="grid">${bl.ids.map(gcard).join('')}</div>`;
- if(bl.t==='vocab')return `<h2 class="h-v">${esc(bl.title)}</h2>${tip}<div class="card vgrid">${bl.ids.map(id=>wrow(id,false)).join('')}</div>`;return''}).join('')}
+ if(bl.t==='vocab')return `<h2 class="h-v">${esc(bl.title)}</h2>${tip}${bl.ids.length?`<div class="card vgrid">${bl.ids.map(id=>wrow(id,false)).join('')}</div>`:''}${(bl.cmp||[]).map(c=>`<div class="note"><span class="lab2 g">比較</span>${esc(c)}</div>`).join('')}`;return''}).join('')}
 function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;

@@ -63,11 +63,11 @@ def compose(plan, G, V, day, batch, site, compare=()):
             elif bl["t"] == "table":
                 out.append(f"\n⚠️ <b>{t}</b>")
             elif bl["t"] == "vocab":
+                if not bl["ids"]:
+                    continue
                 out.append(f"\n{dot} <b>{t}</b>")
-                if bl.get("tip"): out.append("💡 " + h(bl["tip"]))
-                for wid in bl["ids"]:
-                    e = vi[wid]
-                    out.append(f"• {h(e['word'])}　{h(e['reading'])}　{h(e['gloss'][:20])}")
+                out.append("　".join(f"{h(vi[w]['word'])}（{h(vi[w]['reading'])}）" for w in bl["ids"]))
+                if bl.get("cmp"): out.append("⚖️ " + h(bl["cmp"][0][:90]))
         if site:
             out.append(f"\n🔗 完整表格・例句・發音：{site}#d{day['day']}-{batch['slot']}")
         return "\n".join(out)[:4000]
