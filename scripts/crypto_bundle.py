@@ -72,6 +72,16 @@ def encrypt(src_dir, pw):
             for it in data["listening"]:
                 if it["id"] in lc:
                     it.update({k: v for k, v in lc[it["id"]].items() if k in ("qs", "c", "a", "n", "pic", "bk", "trk")})
+    df_path = Path(src_dir) / "diffs.json"                 # sigure "A和B的差別" articles (verbatim)
+    dm_path = Path(src_dir) / "diff_match.json"
+    if df_path.exists() and dm_path.exists():
+        dfs = json.loads(df_path.read_text(encoding="utf8"))
+        data["dmatch"] = json.loads(dm_path.read_text(encoding="utf8"))
+        used = {s for v in data["dmatch"].values() for s in v}
+        data["diffs"] = {s: {k: dfs[s][k] for k in ("title", "terms", "html", "url", "vip")} for s in used}
+        dq_path = Path(src_dir) / "diff_quiz.json"         # blanks of sigure's own marked keywords
+        if dq_path.exists():
+            data["dquiz"] = [q for q in json.loads(dq_path.read_text(encoding="utf8")) if q["slug"] in used]
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))

@@ -41,7 +41,7 @@ def load_full():
     return out
 
 
-def compose(plan, G, V, day, batch, site, compare=()):
+def compose(plan, G, V, day, batch, site, compare=(), diffs=()):
     """Telegram = a compact digest only. Details (connection, examples, translations, audio) live on the web page."""
     vi = {e["id"]: e for e in V}
     h = html.escape
@@ -72,6 +72,8 @@ def compose(plan, G, V, day, batch, site, compare=()):
                 out.append(f"\n{dot} <b>{t}</b>")
                 out.append("　".join(f"{h(vi[w]['word'])}（{h(vi[w]['reading'])}）" for w in bl["ids"]))
                 if bl.get("cmp") and bl.get("star"): out.append("⚖️ " + h(bl["cmp"][0][:90]))
+        if diffs:
+            out.append("\n⚖️ <b>易混比較</b>：" + "、".join(h(t) for t in diffs[:4]))
         if site:
             out.append(f"\n🔗 完整表格・例句・發音：{site}#d{day['day']}-{batch['slot']}")
         return "\n".join(out)[:4000]
@@ -90,6 +92,8 @@ def compose(plan, G, V, day, batch, site, compare=()):
         out.append("\n📊 對照表：" + "、".join(h(t[:18]) for t in fam))
     if batch.get("review"):
         out.append("🔁 複習：" + "、".join(h(short_title(G[i]["title"])[:14]) for i in batch["review"][:3]))
+    if diffs:
+        out.append("⚖️ 易混比較：" + "、".join(h(t) for t in diffs[:4]))
     if site:
         out.append(f"\n🔗 例句・發音・對照表：{site}#d{day['day']}-{batch['slot']}")
     return "\n".join(out)[:4000]
@@ -145,7 +149,9 @@ def main():
         print("no batch for this slot"); return
     site = os.environ.get("SITE_URL", "")
     extra = load_full()
-    msg = compose(plan, G, V, day, batch, site, extra.get("compare", []))
+    dfs = extra.get("diffs") or {}
+    dtitles = [re.sub(r"的差別$", "", dfs[s]["title"]) for s in (extra.get("dmatch") or {}).get(f"{today}|{a.slot}", []) if s in dfs]
+    msg = compose(plan, G, V, day, batch, site, extra.get("compare", []), dtitles)
     if a.dry_run:
         print(msg); print("\n--- audio script ---\n" + audio_script(G, V, batch)[:300]); return
     token, chat = os.environ["TG_TOKEN"].strip(), os.environ["TG_CHAT_ID"].strip()

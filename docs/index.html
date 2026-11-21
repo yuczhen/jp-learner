@@ -78,13 +78,18 @@ a{color:var(--acc)}
 .kch.sel{outline:2px solid var(--acc)}.kch.ok{background:rgba(90,200,120,.28);border-color:var(--ok)}.kch.bad{background:rgba(240,90,90,.25);border-color:#e55}
 .kp{white-space:pre-wrap;line-height:1.9;padding:10px 12px;border-left:4px solid var(--acc);background:rgba(128,128,128,.12);border-radius:8px;margin:10px 0;font-size:16px}
 .kexp{margin-top:6px;line-height:1.85}.kg{margin:16px 0 4px;color:var(--c2);font-weight:700}
+.dfb{font-size:16.5px;line-height:1.9}.dfb .ja{font-size:17px}.dfb .keyword{color:var(--acc);font-weight:700}.dfb .trans{display:block;color:var(--mut);font-size:15px}
+.dfb .keyword-jeans{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:6px;font-size:12.5px}
+.dfb .block{margin:8px 0;padding:8px 12px;border-radius:10px;background:rgba(127,127,127,.12)}.dfb h2{font-size:16px;margin:16px 0 6px}.dfb h3,.dfb h4{font-size:15.5px;margin:12px 0 4px;color:var(--c2)}
+.dfb li{margin:6px 0}.dfb table{margin:8px 0}.dfb td,.dfb th{font-size:15px}
+.dq .blank{color:var(--acc);font-weight:700}.dq .kqn{font-size:18px}.dqr{margin-top:6px;display:none}.dq.done .dqr{display:block}
 </style>
 </head>
 <body><main>
 <h1>日檢JLPT每日學習 <span class="mut" id="cd"></span></h1>
 <div class="bar">
   <select id="day"></select>
-  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button> <button id="tpbtn">🗂 主題總表</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
+  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button> <button id="tpbtn">🗂 主題總表</button><button id="dqbtn">🎯 易混練習</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
   <label class="mut"><input type="checkbox" id="hide"> 隱藏已熟悉</label>
 </div>
 <div id="out"></div>
@@ -101,7 +106,7 @@ const kanaOf=s=>String(s||'').replace(/[一-鿿々ァ-ヶー]+\(([^)]+)\)/g,'$1'
 let JV=null;
 function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));if(!vs.length)return null;
  for(const re of [/Kyoko|Otoya|O-Ren|Hattori/i,/Google|Nanami|Haruka|Ayumi/i])for(const v of vs)if(re.test(v.name))return v;return vs[0]}
-let TP=null,tpK='all',tpQ='',KEY=null,AIDX={},PK={},CUR=null;
+let DF={},DM={},DQ=[],dqAll=false,dqSet=null;let TP=null,tpK='all',tpQ='',KEY=null,AIDX={},PK={},CUR=null;
 function ensurePack(name){if(PK[name])return PK[name];
  PK[name]=fetch('data/a/'+name+'.enc').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(async ab=>{
   const b=new Uint8Array(ab);const raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16)));
@@ -252,16 +257,43 @@ function renderTp(){const out=$('#out');if(!TP){out.innerHTML='<div class="card"
  out.innerHTML=h;
  out.querySelectorAll('.tpk').forEach(b=>b.onclick=()=>{tpK=b.dataset.k;renderTp()});
  const qi=$('#tpq');qi.oninput=e=>{tpQ=e.target.value;const p=qi.selectionStart;renderTp();const n=$('#tpq');n.focus();n.setSelectionRange(p,p)}}
-function render(){if(view==='tp'){document.body.dataset.slot=cur.s;return renderTp()}if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
+// sigure "A和B的差別" articles (verbatim) + practice made by blanking sigure's own marked keyword
+function dqItem(q,i){return `<div class="kq dq" id="dq-${i}"><div class="kqn">${q.q}</div>
+ ${q.opts.map(o=>`<button class="kch" data-o="${esc(o)}" onclick="dqPick(${i},this)">${esc(o)}</button>`).join('')}
+ <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${esc(q.a)}</div><div class="ex"><div class="ja dfb">${q.full}</div><div class="zh">${esc(q.zh)}</div></div></div></div>`}
+window.dqPick=(i,btn)=>{const w=document.getElementById('dq-'+i);if(!w||w.classList.contains('done'))return;const q=DQX[i];
+ w.querySelectorAll('.kch').forEach(b=>{if(b.dataset.o===q.a)b.classList.add('ok');else if(b===btn)b.classList.add('bad')});w.classList.add('done')};
+let DQX=[];
+function dqHtml(list){const base=DQX.length;DQX.push(...list);return list.map((q,k)=>dqItem(q,base+k)).join('')}
+function diffHtml(slug,quiz){const a=DF[slug];if(!a)return'';const qs=quiz?DQ.filter(q=>q.slug===slug):[];
+ return `<details class="cmpd"><summary>⚖️ ${esc(a.title)}${qs.length?` <span class="tag">練習 ${qs.length} 題</span>`:''}</summary><div class="dfb">${a.html}</div>
+ ${a.vip?`<div class="mut" style="margin:8px 0">（後半段是時雨會員內容）<a target="_blank" rel="noopener" href="${a.url}">到時雨看全文</a></div>`:''}
+ ${qs.length?`<details class="mo"><summary>🎯 練習 ${qs.length} 題</summary>${dqHtml(qs)}</details>`:''}</details>`}
+function dayDiffs(day,slot){const l=DM[day.date+'|'+slot]||[];return l.length?`<h2 class="h-c">⚖️ 易混比較</h2>${l.map(s=>diffHtml(s,true)).join('')}`:''}
+function learnedSlugs(){const now=P.days[today()].date,out=new Set();for(const k in DM){if(k.slice(0,10)<=now)DM[k].forEach(s=>out.add(s))}return out}
+let dqQ='';
+function renderDq(){DQX=[];const out=$('#out');const ok=dqAll?null:learnedSlugs();
+ const pool=DQ.filter(q=>!ok||ok.has(q.slug));
+ if(!dqSet||dqSet.all!==dqAll){const a=[...pool];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}dqSet={all:dqAll,list:a.slice(0,10)}}
+ const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>(!ok||ok.has(s))&&(!q||(DF[s].title+DF[s].terms.join('')).includes(q)));
+ out.innerHTML=`<h2>🎯 易混練習</h2>
+ <div style="margin:8px 0"><button class="dqs ${dqAll?'':'on'}" data-a="0">到今天學過的</button> <button class="dqs ${dqAll?'on':''}" data-a="1">全部</button> <button id="dqnew">🔀 換一組</button> <span class="mut">題庫 ${pool.length} 題</span></div>
+ ${dqHtml(dqSet.list)}
+ <h2 class="h-c">⚖️ 易混比較（${arts.length} 篇）</h2><input id="dqq" placeholder="搜尋，例如：ために、から、気分" value="${esc(dqQ)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">
+ ${arts.map(s=>diffHtml(s,true)).join('')}`;
+ out.querySelectorAll('.dqs').forEach(b=>b.onclick=()=>{dqAll=b.dataset.a==='1';renderDq()});
+ $('#dqnew').onclick=()=>{dqSet=null;renderDq();window.scrollTo(0,0)};
+ const qi=$('#dqq');qi.oninput=e=>{dqQ=e.target.value;const p=qi.selectionStart;renderDq();const n=$('#dqq');n.focus();n.setSelectionRange(p,p)}}
+function render(){DQX=[];if(view==='dq'){document.body.dataset.slot=cur.s;return renderDq()}if(view==='tp'){document.body.dataset.slot=cur.s;return renderTp()}if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
  $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
  if(!b){$('#out').innerHTML='<div class="card">今天沒有安排，自由複習 🙂</div>';return}
  const n=b.n_paired||0;preload([...b.vocab.flatMap(i=>['w:'+i,'e:'+i]),...b.grammar.map(g=>'g:'+g+':0')]);
- if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${(b.key||[]).length?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note cmpn">${ruby(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}`;return}
+ if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${(b.key||[]).length?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note cmpn">${ruby(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}${dayDiffs(day,b.slot)}`;return}
  $('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}${b.kind==='review'?'（複習）':''}</h2>${b.listen?listenHtml(b.listen):''}${cmpFor(b.grammar).length?`<h2 class="h-c">📊 相似文法對照</h2>${cmpFor(b.grammar).map(f=>cmpHtml(f,true,b.grammar)).join('')}`:''}<h2 class="h-g">📘 文法 ${b.grammar.length}</h2><div class="grid">${b.grammar.map(gcard).join('')}</div>
  ${(b.review||[]).length?`<div class="mut">複習：${b.review.map(i=>esc((G[i]?.title||'').replace(/^N\d文法\d+/,''))).join('、')}</div>`:''}
- <h2 class="h-v">📝 單字 ${b.vocab.length}</h2>${vgroupHtml(b.vocab,n)}`}
+ <h2 class="h-v">📝 單字 ${b.vocab.length}</h2>${vgroupHtml(b.vocab,n)}${dayDiffs(day,b.slot)}`}
 async function load(){
  const buf=new Uint8Array(await (await fetch('data/bundle.enc')).arrayBuffer());
  for(let tries=0;;tries++){
@@ -271,7 +303,7 @@ async function load(){
    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
-   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;return [d.plan,d.grammar,d.vocab,d.compare||[]];
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
   }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
  }
 }
@@ -284,9 +316,10 @@ async function init(){
  $('#day').value=cur.d;
  $('#day').onchange=e=>{cur.d=+e.target.value;render()};
  $('#am').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='am';render()};$('#pm').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='pm';render()};$('#cmpbtn').onclick=()=>{view=view==='cmp'?'day':'cmp';$('#cmpbtn').classList.toggle('on',view==='cmp');$('#gsbtn').classList.remove('on');render()};$('#gsbtn').onclick=()=>{view=view==='gs'?'day':'gs';$('#gsbtn').classList.toggle('on',view==='gs');$('#cmpbtn').classList.remove('on');render()};
- $('#tpbtn').onclick=()=>{view=view==='tp'?'day':'tp';$('#tpbtn').classList.toggle('on',view==='tp');$('#kobtn').classList.remove('on');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
- $('#kobtn').onclick=()=>{view=view==='ko'?'day':'ko';$('#tpbtn').classList.remove('on');koD=koDay();$('#kobtn').classList.toggle('on',view==='ko');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
- ['am','pm','cmpbtn','gsbtn'].forEach(id=>{const f=$('#'+id).onclick;$('#'+id).onclick=e=>{$('#kobtn').classList.remove('on');$('#tpbtn').classList.remove('on');f(e)}});
+ $('#dqbtn').onclick=()=>{view=view==='dq'?'day':'dq';['tpbtn','kobtn','gsbtn','cmpbtn'].forEach(i=>$('#'+i).classList.remove('on'));$('#dqbtn').classList.toggle('on',view==='dq');render()};
+ $('#tpbtn').onclick=()=>{view=view==='tp'?'day':'tp';$('#dqbtn').classList.remove('on');$('#tpbtn').classList.toggle('on',view==='tp');$('#kobtn').classList.remove('on');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
+ $('#kobtn').onclick=()=>{view=view==='ko'?'day':'ko';$('#tpbtn').classList.remove('on');$('#dqbtn').classList.remove('on');koD=koDay();$('#kobtn').classList.toggle('on',view==='ko');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
+ ['am','pm','cmpbtn','gsbtn'].forEach(id=>{const f=$('#'+id).onclick;$('#'+id).onclick=e=>{$('#kobtn').classList.remove('on');$('#tpbtn').classList.remove('on');$('#dqbtn').classList.remove('on');f(e)}});
  $('#hide').onchange=render;$('#rk').onclick=e=>{e.preventDefault();if(confirm('把所有「已熟悉」標記清掉？')){known.clear();store.set('jpl_known',[]);render()}};$('#lock').onclick=e=>{e.preventDefault();store.set('jpl_pw',null);store.set('pw',null);location.reload()};render();
 }
 init().catch(e=>{$('#out').textContent='載入失敗：'+e});
