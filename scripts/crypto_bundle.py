@@ -93,6 +93,15 @@ def encrypt(src_dir, pw):
         for c in g.get("class", []):
             for x in c["examples"]:
                 x["ruby"] = _kata(x["ruby"])
+    # PRINCIPLES.md: drop text that was written / translated by the assistant
+    for it in data.get("listening", []):
+        for ln in it.get("lines", []): ln["zh"] = ""
+        it["notes"] = []; it["ans"] = ""
+        for q_ in it.get("qs", []) or []: q_["e"] = ""
+    for st in (data.get("jlpt") or {}).get("sets", []):
+        for sec in st["sections"]:
+            for it in sec["items"]:
+                it["e"] = ""; it.pop("script", None)
     raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()
     salt, iv = get_salt(), os.urandom(12)
     OUT.parent.mkdir(parents=True, exist_ok=True)
