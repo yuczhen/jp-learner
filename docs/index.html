@@ -226,6 +226,7 @@ function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card"
 function ctbl(t){return `<div class="tw"><table class="rt"><tr>${t.head.map(h=>`<th>${ruby(h)}</th>`).join('')}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i==0?'k':''}" data-label="${esc(String(t.head[i]||'').replace(/\([^)]*\)/g,''))}">${ruby(c)}</td>`).join('')}</tr>`).join('')}</table></div>`}
 function blocksHtml(b){return b.blocks.map(bl=>{const tip=bl.tip?`<div class="mut" style="margin:4px 0 8px">${esc(bl.tip)}</div>`:'';
  if(bl.t==='note')return `<div class="card co"><div class="pat">${esc(bl.title)}</div>${(bl.lines||[]).map(l=>`<div class="note">${esc(l)}</div>`).join('')}${(bl.tables||[]).length?`<details class="mo"><summary>展開對照表</summary>${bl.tables.map(ctbl).join('')}</details>`:''}</div>`;
+ if(bl.t==='cmpauto'){const fs=cmpFor(bl.ids);return fs.length?`<h2 class="h-c">${esc(bl.title)}</h2>${fs.map(f=>cmpHtml(f,true,bl.ids)).join('')}`:''}
  if(bl.t==='table')return `<h2 class="h-c">${esc(bl.title)}</h2>${tip}${ctbl(bl)}`;
  if(bl.t==='grammar')return `<h2 class="h-g">${esc(bl.title)}</h2>${tip}<div class="grid">${bl.ids.map(gcard).join('')}</div>`;
  if(bl.t==='vocab'){if(!bl.ids.length)return `<h2 class="h-v">${esc(bl.title)}</h2>${tip}`;
