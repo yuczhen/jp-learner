@@ -108,7 +108,7 @@ def encrypt(src_dir, pw):
                 x["ruby"] = _kata(x["ruby"])
     # PRINCIPLES.md: drop text that was written / translated by the assistant
     for it in data.get("listening", []):
-        for ln in it.get("lines", []): ln["zh"] = ""
+        # line translations: by Claude (owner approved 2026-11-21, the handouts have none), reviewed line by line
         it["notes"] = []; it["ans"] = ""
         for q_ in it.get("qs", []) or []: q_["e"] = ""
     for st in (data.get("jlpt") or {}).get("sets", []):
