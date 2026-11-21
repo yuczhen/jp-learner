@@ -231,6 +231,13 @@ function blocksHtml(b){return b.blocks.map(bl=>{const tip=bl.tip?`<div class="mu
  if(bl.t==='vocab'){if(!bl.ids.length)return `<h2 class="h-v">${esc(bl.title)}</h2>${tip}`;
   return `<details class="vg"${bl.star?' open':''}><summary><b>${esc(bl.title)}</b>${bl.star?' <span class="tag">★ 重點</span>':''} <span class="mut">${bl.ids.length} 字</span></summary>${tip}<div class="card vgrid">${bl.ids.map(id=>wrow(id,false)).join('')}</div>${(bl.cmp||[]).map(c=>`<div class="note"><span class="lab2 g">比較</span>${esc(c)}</div>`).join('')}</details>`}
  return''}).join('')}
+function vgroupHtml(ids,n){const kan=id=>{const w=(VI[id]?.word||'').replace(/[（(].*?[）)]/g,'');return [...new Set(w.match(/[一-鿿々]/g)||[])]};
+ const map={};ids.forEach(id=>kan(id).forEach(c=>(map[c]=map[c]||[]).push(id)));
+ const fams=Object.entries(map).filter(([c,l])=>l.length>=2).sort((a,b)=>b[1].length-a[1].length);const used=new Set(),groups=[];
+ for(const [c,l] of fams){const m=l.filter(i=>!used.has(i));if(m.length>=2){m.forEach(i=>used.add(i));groups.push([c,m])}}
+ const rest=ids.filter(i=>!used.has(i));const row=l=>`<div class="card vgrid">${l.map(id=>wrow(id,ids.indexOf(id)<n)).join('')}</div>`;
+ const hd=(a,b)=>`<div class="mut" style="margin:14px 0 4px;padding:2px 8px;border-left:3px solid var(--ok)">${a} ${b}</div>`;
+ return groups.map(([c,m])=>hd(`<b style="font-size:20px">${c}</b>`,`同一個字的詞 ${m.length} 個，一起背`)+row(m)).join('')+(rest.length?hd('<b>其他</b>',`沒有同字的 ${rest.length} 個`)+row(rest):'')}
 function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
@@ -240,7 +247,7 @@ function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return render
  if(b.blocks){$('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}</h2>${b.key?`<div class="card co" style="border-left-color:#f5b041"><div class="pat">⭐ 今日重點</div>${b.key.map(k=>`<div class="note">${esc(k)}</div>`).join('')}</div>`:''}${b.listen?listenHtml(b.listen):''}${blocksHtml(b)}`;return}
  $('#out').innerHTML=`<h2 class="h-t">${esc(b.theme)}${b.kind==='review'?'（複習）':''}</h2>${b.listen?listenHtml(b.listen):''}${cmpFor(b.grammar).length?`<h2 class="h-c">📊 相似文法對照</h2>${cmpFor(b.grammar).map(f=>cmpHtml(f,true,b.grammar)).join('')}`:''}<h2 class="h-g">📘 文法 ${b.grammar.length}</h2><div class="grid">${b.grammar.map(gcard).join('')}</div>
  ${(b.review||[]).length?`<div class="mut">複習：${b.review.map(i=>esc((G[i]?.title||'').replace(/^N\d文法\d+/,''))).join('、')}</div>`:''}
- <h2 class="h-v">📝 單字 ${b.vocab.length}</h2><div class="card vgrid">${b.vocab.map((id,i)=>wrow(id,i<n)).join('')}</div>`}
+ <h2 class="h-v">📝 單字 ${b.vocab.length}</h2>${vgroupHtml(b.vocab,n)}`}
 async function load(){
  const buf=new Uint8Array(await (await fetch('data/bundle.enc')).arrayBuffer());
  for(let tries=0;;tries++){
