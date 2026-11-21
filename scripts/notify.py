@@ -52,11 +52,15 @@ def compose(plan, G, V, day, batch, site, compare=()):
     out = [f"{dot*4} {sun} <b>{label}</b> {sun} {dot*4}",
            f"<b>Day {day['day']}/{plan['total_days']}</b>（{kind}）· {h(batch['theme'])}"]
     if batch.get("blocks"):                         # curated (organised) batch: show it group by group
+        if batch.get("key"):
+            out.append("\n⭐ <b>今日重點</b>")
+            out += ["• " + h(k) for k in batch["key"]]
         for bl in batch["blocks"]:
             t = h(bl["title"])
             if bl["t"] == "note":
-                out.append(f"\n{dot} <b>{t}</b>")
-                out += [h(x) for x in bl.get("lines", [])[:2]]
+                if not batch.get("key"):
+                    out.append(f"\n{dot} <b>{t}</b>")
+                    out += [h(x) for x in bl.get("lines", [])[:2]]
             elif bl["t"] == "grammar":
                 out.append(f"\n{dot} <b>{t}</b>")
                 out += [f"{i}. {h(short_title(G[g]['title'])[:44])}" for i, g in enumerate(bl["ids"], 1)]
@@ -67,7 +71,7 @@ def compose(plan, G, V, day, batch, site, compare=()):
                     continue
                 out.append(f"\n{dot} <b>{t}</b>")
                 out.append("　".join(f"{h(vi[w]['word'])}（{h(vi[w]['reading'])}）" for w in bl["ids"]))
-                if bl.get("cmp"): out.append("⚖️ " + h(bl["cmp"][0][:90]))
+                if bl.get("cmp") and bl.get("star"): out.append("⚖️ " + h(bl["cmp"][0][:90]))
         if site:
             out.append(f"\n🔗 完整表格・例句・發音：{site}#d{day['day']}-{batch['slot']}")
         return "\n".join(out)[:4000]
