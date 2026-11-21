@@ -60,6 +60,36 @@ def examples(gid):
     return out
 
 
+def forms(label):
+    """all spellings of an option label: 「せい（だ／で）」→ せい, せいだ, せいで; 「さいちゅう（最中）」→ さいちゅう, 最中"""
+    out = set()
+    for part in re.split(r"[／、・‧]", re.sub(r"（[^）]*）|\([^)]*\)", lambda m: m.group(0).replace("／", "|"), label)):
+        part = part.replace("〜", "").replace("～", "")
+        m = re.match(r"^(.*?)[（(]([^）)]*)[）)](.*)$", part)
+        if m:
+            base = m.group(1) + m.group(3)
+            out.add(base)
+            for v in m.group(2).split("|"):
+                out.add(m.group(1) + v + m.group(3))   # optional ending
+                out.add(v)                              # kanji spelling
+        else:
+            out.add(part)
+    return {f.strip() for f in out if f.strip()}
+
+
+def blank(ja, kw, label):
+    """blank exactly the option; anything the sigure keyword span has around it stays visible"""
+    fs = sorted(forms(label), key=len, reverse=True)
+    hit = next((f for f in fs if f == kw), None) or next((f for f in fs if f in kw), None)
+    if not hit:
+        return None                                     # keyword and option differ (e.g. ということ vs ということだ)
+    i = kw.index(hit)
+    pre, suf = H.escape(kw[:i]), H.escape(kw[i + len(hit):])
+    q = re.sub(r'<span class="keyword">.*?</span>', pre + '<span class="blank">（　　）</span>' + suf, ja, count=1, flags=re.S)
+    # the filled-in sentence must be exactly the original sentence
+    return (q, hit) if text(q).replace("（　　）", hit, 1) == text(ja) else None
+
+
 quiz = []
 for fam in C:
     mem = []
@@ -79,8 +109,10 @@ for fam in C:
                 continue
             opts = list(dict.fromkeys([t] + [t2 for _, t2 in others]))[:MAX_OPTS]
             opts = sorted(opts, key=lambda o: [x[1] for x in mem].index(o))   # family order, answer not always first
-            q = re.sub(r'<span class="keyword">.*?</span>', '<span class="blank">（　　）</span>', ex["ja"], count=1, flags=re.S)
-            quiz.append({"fam": fam["id"], "gid": gid, "q": q, "full": ex["ja"], "opts": opts, "a": t, "zh": ex["zh"]})
+            r = blank(ex["ja"], ex["kw"], t)
+            if not r:
+                continue
+            quiz.append({"fam": fam["id"], "gid": gid, "q": r[0], "fill": r[1], "full": ex["ja"], "opts": opts, "a": t, "zh": ex["zh"]})
             n += 1
 
 (ROOT / "data/gram_quiz.json").write_text(json.dumps(quiz, ensure_ascii=False), encoding="utf8")

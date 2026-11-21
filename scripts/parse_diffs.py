@@ -96,6 +96,20 @@ def kw_match(t, k):
     return k == t or k.startswith(t) or (len(t) >= 2 and k.startswith(t[:-1]))
 
 
+def forms(label):
+    out = set()
+    for part in re.split(r"[／、・‧]", re.sub(r"（[^）]*）|\([^)]*\)", lambda m: m.group(0).replace("／", "|"), label)):
+        part = part.replace("〜", "").replace("～", "")
+        m = re.match(r"^(.*?)[（(]([^）)]*)[）)](.*)$", part)
+        if m:
+            out.add(m.group(1) + m.group(3))
+            for v in m.group(2).split("|"):
+                out.add(m.group(1) + v + m.group(3)); out.add(v)
+        else:
+            out.add(part)
+    return {f.strip() for f in out if f.strip()}
+
+
 BOTH = ("皆可", "都可", "都能", "兩者", "共通", "相同", "通用", "差別", "差異", "區別", "總結", "比較")
 quiz = []
 for slug, v in out.items():
@@ -121,10 +135,20 @@ for slug, v in out.items():
              (wrong_marked and all(any(kw_match(o, w) or w.startswith(o) for w in wrong_marked) for o in ts if o != ans))
         if not ok or re.search(r"[✖×❌]", text(ja.group(1))):
             continue
-        q = re.sub(r'<span class="keyword">.*?</span>', '<span class="blank">（　　）</span>', ja.group(1), count=1, flags=re.S)
+        fs = sorted(forms(ans), key=len, reverse=True)
+        hit = next((f for f in fs if f == k), None) or next((f for f in fs if f in k), None)
+        if not hit:                                       # e.g. conjugated (借りた vs 借りる): filled sentence would differ
+            continue
+        i = k.index(hit)
+        fill = H.escape(k[:i]) + '<span class="blank">（　　）</span>' + H.escape(k[i + len(hit):])
+        q = re.sub(r'<span class="keyword">.*?</span>', fill, ja.group(1), count=1, flags=re.S)
+        if text(q).replace("（　　）", hit, 1) != text(ja.group(1)):   # filled-in sentence must equal the original
+            continue
         tr = re.search(r'<span class="trans">(.*?)</span>\s*$', li, re.S) or re.search(r'<span class="trans">(.*)', li, re.S)
         zh = text(re.sub(r'<span class="keyword-jeans">.*?</span>', "", tr.group(1))) if tr else ""
-        quiz.append({"slug": slug, "q": q, "full": ja.group(1), "opts": ts, "a": ans, "zh": zh})
+        if not zh:
+            continue
+        quiz.append({"slug": slug, "q": q, "fill": hit, "full": ja.group(1), "opts": ts, "a": ans, "zh": zh})
 
 (ROOT / "data/diffs.json").write_text(json.dumps(out, ensure_ascii=False), encoding="utf8")
 (ROOT / "data/diff_quiz.json").write_text(json.dumps(quiz, ensure_ascii=False), encoding="utf8")

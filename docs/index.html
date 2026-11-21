@@ -260,7 +260,7 @@ function renderTp(){const out=$('#out');if(!TP){out.innerHTML='<div class="card"
 // sigure "A和B的差別" articles (verbatim) + practice made by blanking sigure's own marked keyword
 function dqItem(q,i){return `<div class="kq dq" id="dq-${i}"><div class="kqn">${q.q}</div>
  ${q.opts.map(o=>`<button class="kch" data-o="${esc(o)}" onclick="dqPick(${i},this)">${esc(o)}</button>`).join('')}
- <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${esc(q.a)}</div><div class="ex"><div class="ja dfb">${q.full}</div><div class="zh">${esc(q.zh)}</div></div></div></div>`}
+ <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${esc(q.a)}${q.fill&&q.fill!==q.a?`　填入：${esc(q.fill)}`:''}</div><div class="ex"><div class="ja dfb">${q.full}</div><div class="zh">${esc(q.zh)}</div></div></div></div>`}
 window.dqPick=(i,btn)=>{const w=document.getElementById('dq-'+i);if(!w||w.classList.contains('done'))return;const q=DQX[i];
  w.querySelectorAll('.kch').forEach(b=>{if(b.dataset.o===q.a)b.classList.add('ok');else if(b===btn)b.classList.add('bad')});w.classList.add('done')};
 let DQX=[];
