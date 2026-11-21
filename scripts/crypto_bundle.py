@@ -60,6 +60,9 @@ def encrypt(src_dir, pw):
     if vx_path.exists():
         have = {e["id"] for e in data["vocab"]}
         data["vocab"] += [e for e in json.loads(vx_path.read_text(encoding="utf8")) if e["id"] not in have]
+    tp_path = Path(src_dir) / "topics.json"               # topic index page (all word groups)
+    if tp_path.exists():
+        data["topics"] = json.loads(tp_path.read_text(encoding="utf8"))
     ls_path = Path(src_dir) / "listening.json"
     if ls_path.exists():
         data["listening"] = json.loads(ls_path.read_text(encoding="utf8"))

@@ -84,7 +84,7 @@ a{color:var(--acc)}
 <h1>日檢JLPT每日學習 <span class="mut" id="cd"></span></h1>
 <div class="bar">
   <select id="day"></select>
-  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
+  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button> <button id="tpbtn">🗂 主題總表</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
   <label class="mut"><input type="checkbox" id="hide"> 隱藏已熟悉</label>
 </div>
 <div id="out"></div>
@@ -101,7 +101,7 @@ const kanaOf=s=>String(s||'').replace(/[一-鿿々ァ-ヶー]+\(([^)]+)\)/g,'$1'
 let JV=null;
 function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));if(!vs.length)return null;
  for(const re of [/Kyoko|Otoya|O-Ren|Hattori/i,/Google|Nanami|Haruka|Ayumi/i])for(const v of vs)if(re.test(v.name))return v;return vs[0]}
-let KEY=null,AIDX={},PK={},CUR=null;
+let TP=null,tpK='all',tpQ='',KEY=null,AIDX={},PK={},CUR=null;
 function ensurePack(name){if(PK[name])return PK[name];
  PK[name]=fetch('data/a/'+name+'.enc').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(async ab=>{
   const b=new Uint8Array(ab);const raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(4,16)},KEY,b.slice(16)));
@@ -239,7 +239,20 @@ function vgroupHtml(ids,n){const kan=id=>{const w=(VI[id]?.word||'').replace(/[�
  const rest=ids.filter(i=>!used.has(i));const row=l=>`<div class="card vgrid">${l.map(id=>wrow(id,ids.indexOf(id)<n)).join('')}</div>`;
  const hd=(a,b)=>`<div class="mut" style="margin:14px 0 4px;padding:2px 8px;border-left:3px solid var(--ok)">${a} ${b}</div>`;
  return groups.map(([c,m])=>hd(`<b style="font-size:20px">${c}</b>`,`同一個字的詞 ${m.length} 個，一起背`)+row(m)).join('')+(rest.length?hd('<b>其他</b>',`沒有同字的 ${rest.length} 個`)+row(rest):'')}
-function render(){if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
+const TPK={all:'全部',pair:'自↔他成對',conf:'易混・近義',verb:'動詞（意思）',noun:'名詞（主題）',kata:'外來語（主題）',kanji:'漢字家族'};
+function renderTp(){const out=$('#out');if(!TP){out.innerHTML='<div class="card">尚無主題總表。</div>';return}
+ const q=tpQ.trim().toLowerCase();
+ const hit=u=>{if(tpK!=='all'&&u.kind!==tpK)return false;if(!q)return true;return u.title.toLowerCase().includes(q)||u.ids.some(i=>{const e=VI[i];return e&&((e.word+e.reading+e.gloss).toLowerCase().includes(q))})};
+ const us=TP.filter(hit);
+ let h=`<h2>🗂 主題總表</h2><div class="mut">把單字依「同字／近義／成對／主題」整理在一起（每日批次裡的分組都收在這裡，方便隨時查）。共 ${TP.length} 組，目前顯示 ${us.length} 組。</div>
+ <div style="margin:8px 0">${Object.entries(TPK).map(([k,v])=>`<button class="tpk ${k===tpK?'on':''}" data-k="${k}">${v}</button>`).join(' ')} <input id="tpq" placeholder="搜尋單字／讀音／意思" value="${esc(tpQ)}" style="padding:6px 10px;border-radius:8px;margin-left:6px"></div>`;
+ for(const u of us.slice(0,120)){
+  h+=`<details class="vg" ${(u.cmp||[]).length?'open':''}><summary><b>${esc(u.title)}</b> <span class="mut">${u.ids.length} 字・${TPK[u.kind]||''}</span></summary>${(u.cmp||[]).map(c=>`<div class="note cmpn"><span class="lab2 g">比較</span>${ruby(c)}</div>`).join('')}<div class="card vgrid">${u.ids.map(id=>wrow(id,false)).join('')}</div></details>`}
+ if(us.length>120)h+=`<div class="mut">只顯示前 120 組，請用上面的分類或搜尋縮小範圍。</div>`;
+ out.innerHTML=h;
+ out.querySelectorAll('.tpk').forEach(b=>b.onclick=()=>{tpK=b.dataset.k;renderTp()});
+ const qi=$('#tpq');qi.oninput=e=>{tpQ=e.target.value;const p=qi.selectionStart;renderTp();const n=$('#tpq');n.focus();n.setSelectionRange(p,p)}}
+function render(){if(view==='tp'){document.body.dataset.slot=cur.s;return renderTp()}if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
  document.body.dataset.slot=(day.batches.find(x=>x.slot===cur.s)||{slot:cur.s}).slot;
  $('#am').classList.toggle('on',cur.s==='am');$('#pm').classList.toggle('on',cur.s==='pm');
@@ -258,7 +271,7 @@ async function load(){
    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
-   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;return [d.plan,d.grammar,d.vocab,d.compare||[]];
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;return [d.plan,d.grammar,d.vocab,d.compare||[]];
   }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
  }
 }
@@ -271,8 +284,9 @@ async function init(){
  $('#day').value=cur.d;
  $('#day').onchange=e=>{cur.d=+e.target.value;render()};
  $('#am').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='am';render()};$('#pm').onclick=()=>{view='day';$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');cur.s='pm';render()};$('#cmpbtn').onclick=()=>{view=view==='cmp'?'day':'cmp';$('#cmpbtn').classList.toggle('on',view==='cmp');$('#gsbtn').classList.remove('on');render()};$('#gsbtn').onclick=()=>{view=view==='gs'?'day':'gs';$('#gsbtn').classList.toggle('on',view==='gs');$('#cmpbtn').classList.remove('on');render()};
- $('#kobtn').onclick=()=>{view=view==='ko'?'day':'ko';koD=koDay();$('#kobtn').classList.toggle('on',view==='ko');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
- ['am','pm','cmpbtn','gsbtn'].forEach(id=>{const f=$('#'+id).onclick;$('#'+id).onclick=e=>{$('#kobtn').classList.remove('on');f(e)}});
+ $('#tpbtn').onclick=()=>{view=view==='tp'?'day':'tp';$('#tpbtn').classList.toggle('on',view==='tp');$('#kobtn').classList.remove('on');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
+ $('#kobtn').onclick=()=>{view=view==='ko'?'day':'ko';$('#tpbtn').classList.remove('on');koD=koDay();$('#kobtn').classList.toggle('on',view==='ko');$('#gsbtn').classList.remove('on');$('#cmpbtn').classList.remove('on');render()};
+ ['am','pm','cmpbtn','gsbtn'].forEach(id=>{const f=$('#'+id).onclick;$('#'+id).onclick=e=>{$('#kobtn').classList.remove('on');$('#tpbtn').classList.remove('on');f(e)}});
  $('#hide').onchange=render;$('#rk').onclick=e=>{e.preventDefault();if(confirm('把所有「已熟悉」標記清掉？')){known.clear();store.set('jpl_known',[]);render()}};$('#lock').onclick=e=>{e.preventDefault();store.set('jpl_pw',null);store.set('pw',null);location.reload()};render();
 }
 init().catch(e=>{$('#out').textContent='載入失敗：'+e});
