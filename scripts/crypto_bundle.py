@@ -100,8 +100,19 @@ def encrypt(src_dir, pw):
                 e["ex"] = {"ja": _clean(e["ex"]["ja"]), "ruby": _clean(e["ex"]["ruby"]), "zh": e["ex"]["zh"], "src": e["ex"].get("src", "")}
             elif e["id"] in ex:
                 e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"], "src": ex[e["id"]].get("src", "")}
+    # furigana as printed by sigure for sigure sentences (instead of tool-made readings)
+    sr_path = Path(src_dir) / "sigure_ruby.json"
+    SR = {re.sub(r"[\s　]", "", k): v for k, v in json.loads(sr_path.read_text(encoding="utf8")).items()} if sr_path.exists() else {}
+    def _src_ruby(x):
+        r = SR.get(re.sub(r"[\s　]", "", x["ja"]))
+        if r:
+            x["ruby"] = r
+    for e in data["vocab"]:
+        if e.get("ex") and e["ex"].get("src") == "時雨":
+            _src_ruby(e["ex"]); e["ex"]["ruby"] = _kata(e["ex"]["ruby"])
     for g in data["grammar"].values():
         for x in g["examples"]:
+            _src_ruby(x)
             x["ruby"] = _kata(x["ruby"])
             x["ja"] = _clean(x["ja"])
         for c in g.get("class", []):
