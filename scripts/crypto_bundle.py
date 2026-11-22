@@ -103,6 +103,9 @@ def encrypt(src_dir, pw):
                 elif q.pop("same_passage", False):
                     q["pid"] = cur
                 hq.append(q)
+        gq_path = Path(src_dir) / "goi_quiz.json"           # 語彙 解析 PDFs (answers = 解答☞, teacher's notes)
+        if gq_path.exists():
+            hq += json.loads(gq_path.read_text(encoding="utf8"))
         data["hquiz"] = [{**q, "qr": "\n".join(R(l) for l in q["q"].split("\n")), "or": [R(o) for o in q["opts"]]} for q in hq]
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
@@ -187,7 +190,23 @@ def encrypt(src_dir, pw):
             pass
         if q.get("ans"):
             q["ar"] = _kata(_furi(q["ans"], q["ans"], "practice"))
-        if q.get("exp"):
+        if "語彙解析" in q["src"]:              # no furigana where it would give the answer away
+            if q["sec"] == "問題1":
+                q["qr"] = re.sub(r"［[^］]*］", lambda m: re.sub(r"\([^()]*\)", "", m.group(0)), q["qr"])
+            if q["sec"] == "問題2":
+                q["or"] = list(q["opts"])
+        if q.get("exp") and "語彙解析" in q["src"]:     # teacher's notes mix Chinese and fake distractors: printed furigana only
+            def _src_only(l):
+                k_ = re.sub(r"[\s　]", "", l)
+                if k_ in SR:
+                    return SR[k_]
+                h = furi.handout(l)
+                if not h:
+                    return l
+                pos = [i for i, ch in enumerate(l) if not re.match(r"[\s　]", ch)]   # back to the spaced line
+                return furi.build(l, [(pos[a_], pos[b_ - 1] + 1, y) for a_, b_, y in h[1]])
+            q["er"] = "\n".join(_kata(_src_only(l)) if l.strip() else l for l in q["exp"].split("\n"))
+        elif q.get("exp"):
             q["er"] = "\n".join(_kata(_furi(l, l, "practice")) for l in q["exp"].split("\n"))
     data["hpass"] = ["\n".join(_kata(_furi(l, l, "practice")) for l in t.split("\n")) for t in data.get("hpass", [])]
     (Path(src_dir) / "furi_review.json").write_text(json.dumps(review, ensure_ascii=False, indent=0), encoding="utf8")
