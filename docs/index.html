@@ -276,7 +276,8 @@ function learnedSlugs(){const now=P.days[today()].date,out=new Set();for(const k
 let dqQ='';
 // practice = questions printed in the owner's handouts (question, options, answer = the handout's red box)
 let hqSrc='';
-function hqItem(q,i){DQX[i]={a:String(q.a)};return `<div class="kq dq" id="dq-${i}"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div>
+function hqItem(q,i){if(q.kind==='write')return `<div class="kq dq"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div><details><summary>看答案</summary><div class="abox"><span class="lab ok">答案</span>${ruby(q.ar||q.ans)}</div></details></div>`;
+ DQX[i]={a:String(q.a)};return `<div class="kq dq" id="dq-${i}"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div>
  ${q.or.map((o,k)=>`<button class="kch" data-o="${k+1}" onclick="dqPick(${i},this)">${k+1}．${ruby(o)}</button>`).join('')}
  <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${q.order?'★ ':''}${q.a}．${ruby(q.or[q.a-1])}</div>${q.order?`<div class="ex">順序：${q.order.join(' → ')}<br>${q.order.map(n=>ruby(q.or[n-1])).join(' ')}</div>`:''}${q.er?`<div class="ex" style="white-space:pre-wrap">${q.er.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}</div></div>`}
 function renderDq(){DQX=[];const out=$('#out');const srcs=[...new Set(HQ.map(q=>q.src))];if(!srcs.includes(hqSrc))hqSrc=srcs[0]||'';

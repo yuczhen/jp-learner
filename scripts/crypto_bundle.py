@@ -92,8 +92,11 @@ def encrypt(src_dir, pw):
     if hq_path.exists():
         from build_examples import tok, MODE, ruby as _rb
         R = lambda t: _kata(_rb(tok.tokenize(t, MODE))) if t.strip() else t
-        data["hquiz"] = [{**q, "qr": "\n".join(R(l) for l in q["q"].split("\n")), "or": [R(o) for o in q["opts"]]}
-                         for q in json.loads(hq_path.read_text(encoding="utf8"))]
+        hq = json.loads(hq_path.read_text(encoding="utf8"))
+        hx_path = Path(src_dir) / "handout_quiz_extra.json"   # tests shown in the class videos (answers on screen)
+        if hx_path.exists():
+            hq += json.loads(hx_path.read_text(encoding="utf8"))
+        data["hquiz"] = [{**q, "qr": "\n".join(R(l) for l in q["q"].split("\n")), "or": [R(o) for o in q["opts"]]} for q in hq]
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))
@@ -175,6 +178,8 @@ def encrypt(src_dir, pw):
         q["or"] = [_kata(_furi(o, r, "practice")) for o, r in zip(q["opts"], q["or"])]
         if q.get("q") and "\n" in q["q"] and "qr" not in q:
             pass
+        if q.get("ans"):
+            q["ar"] = _kata(_furi(q["ans"], q["ans"], "practice"))
         if q.get("exp"):
             q["er"] = "\n".join(_kata(_furi(l, l, "practice")) for l in q["exp"].split("\n"))
     data["hpass"] = ["\n".join(_kata(_furi(l, l, "practice")) for l in t.split("\n")) for t in data.get("hpass", [])]
