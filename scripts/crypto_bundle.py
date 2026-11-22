@@ -72,6 +72,11 @@ def encrypt(src_dir, pw):
             for it in data["listening"]:
                 if it["id"] in lc:
                     it.update({k: v for k, v in lc[it["id"]].items() if k in ("qs", "c", "a", "n", "pic", "bk", "trk")})
+    lx_path = Path(src_dir) / "listening_extra.json"      # class-print listening (script/options from the handout)
+    if lx_path.exists():
+        for x in json.loads(lx_path.read_text(encoding="utf8")):
+            x.pop("audio", None); x["x"] = 1
+            data.setdefault("listening", []).append(x)
     df_path = Path(src_dir) / "diffs.json"                 # sigure "A和B的差別" articles (verbatim)
     dm_path = Path(src_dir) / "diff_match.json"
     if df_path.exists() and dm_path.exists():
@@ -179,7 +184,7 @@ def encrypt(src_dir, pw):
     lt_path = Path(src_dir) / "listen_titles.json"         # source audio file (Track no.), shown under the title
     lt = json.loads(lt_path.read_text(encoding="utf8")) if lt_path.exists() else {}
     for it in data.get("listening", []):
-        it["src"] = lt.get(it["id"], "")
+        it["src"] = it.get("src") or lt.get(it["id"], "")
     for it in data.get("listening", []):
         # line translations: by Claude (owner approved 2026-11-21, the handouts have none), reviewed line by line
         it["notes"] = []; it["ans"] = ""

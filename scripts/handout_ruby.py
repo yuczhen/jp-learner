@@ -42,7 +42,7 @@ def page_ruby(page):
         s = "".join(c[0] for c in ln)
         top = min(c[1][1] for c in ln)
         for r in runs:
-            if not re.fullmatch(r"[ぁ-ゖー]+", r["t"]) or not (0 <= top - r["y1"] < 6):
+            if not re.fullmatch(r"[ぁ-ゖー]+", r["t"]) or not (-4 <= top - r["y1"] < 6):
                 continue
             idx = [i for i, c in enumerate(ln) if KANJI.match(c[0]) and c[1][2] > r["x0"] + 1 and c[1][0] < r["x1"] - 1]
             if idx and idx == list(range(idx[0], idx[-1] + 1)):

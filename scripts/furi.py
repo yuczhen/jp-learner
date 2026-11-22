@@ -43,13 +43,14 @@ def handout(ja):
     if _H is None:
         p = ROOT / "data/handout_ruby.json"
         _H = json.loads(p.read_text(encoding="utf8"))["pages"] if p.exists() else []
+        for pg in _H:                                        # cache whitespace-free text and its offsets
+            pg["pos"] = [i for i, ch in enumerate(pg["t"]) if not WS.match(ch)]
+            pg["flat"] = "".join(pg["t"][i] for i in pg["pos"])
     key = WS.sub("", ja)
     if not key:
         return None
     for pg in _H:
-        t = pg["t"]
-        pos = [i for i, ch in enumerate(t) if not WS.match(ch)]
-        flat = "".join(t[i] for i in pos)
+        t, pos, flat = pg["t"], pg["pos"], pg["flat"]
         k = flat.find(key)
         if k < 0:
             continue
