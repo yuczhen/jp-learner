@@ -79,12 +79,7 @@ def encrypt(src_dir, pw):
         data["dmatch"] = json.loads(dm_path.read_text(encoding="utf8"))
         used = {s for v in data["dmatch"].values() for s in v}
         data["diffs"] = {s: {k: dfs[s][k] for k in ("title", "terms", "html", "url", "vip")} for s in used}
-        dq_path = Path(src_dir) / "diff_quiz.json"         # blanks of sigure's own marked keywords
-        if dq_path.exists():
-            data["dquiz"] = [q for q in json.loads(dq_path.read_text(encoding="utf8")) if q["slug"] in used]
-    gq_path = Path(src_dir) / "gram_quiz.json"             # 相似文法練習 (blanks of sigure's marked keywords)
-    if gq_path.exists():
-        data["gquiz"] = json.loads(gq_path.read_text(encoding="utf8"))
+    # practice quizzes built by script (dquiz/gquiz) removed 2026-11-22: owner wants only questions printed in the handouts
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))
@@ -107,6 +102,10 @@ def encrypt(src_dir, pw):
             for x in c["examples"]:
                 x["ruby"] = _kata(x["ruby"])
     # PRINCIPLES.md: drop text that was written / translated by the assistant
+    lt_path = Path(src_dir) / "listen_titles.json"         # titles = source audio file names (no self-written titles)
+    lt = json.loads(lt_path.read_text(encoding="utf8")) if lt_path.exists() else {}
+    for it in data.get("listening", []):
+        it["title"] = lt.get(it["id"], it["id"])
     for it in data.get("listening", []):
         # line translations: by Claude (owner approved 2026-11-21, the handouts have none), reviewed line by line
         it["notes"] = []; it["ans"] = ""

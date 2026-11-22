@@ -83,8 +83,7 @@ print(len(out), "articles;", sum(len(v["ex"]) for v in out.values()), "keyword e
 
 # ---- 易混練習: blank the sigure-marked keyword; options = the article's compared terms.
 # Only examples whose answer is unambiguous from the article itself:
-#   (a) the example sits under a heading naming exactly one term and its keyword is that term, or
-#   (b) the article marks the other term(s) as wrong for that sentence (✖ / ❌ notes).
+#   the article marks every other term as wrong for that sentence (✖ / ❌ notes).
 def split_terms(ts):
     r = []
     for t in ts:
@@ -131,8 +130,11 @@ for slug, v in out.items():
         ans = hit[0]
         wrong_marked = re.findall(r"[✖×❌]\s*([^）)\s]+)", text(li))
         in_head = [t for t in ts if t in head]
-        ok = (in_head == [ans] and not any(b in head for b in BOTH)) or \
-             (wrong_marked and all(any(kw_match(o, w) or w.startswith(o) for w in wrong_marked) for o in ts if o != ans))
+        # strict (owner 2026-11-22): options = the answer + only the terms sigure itself marks wrong for this
+        # sentence (「✖X」 or 「不能用『X』」); no sigure mark -> no quiz item
+        wrong_marked += re.findall(r"不能用「([^」]+)」", text(li))
+        wrong = [o for o in ts if o != ans and any(kw_match(o, w) or w.startswith(o) for w in wrong_marked)]
+        ok = bool(wrong)
         if not ok or re.search(r"[✖×❌]", text(ja.group(1))):
             continue
         fs = sorted(forms(ans), key=len, reverse=True)
@@ -148,7 +150,7 @@ for slug, v in out.items():
         zh = text(re.sub(r'<span class="keyword-jeans">.*?</span>', "", tr.group(1))) if tr else ""
         if not zh:
             continue
-        quiz.append({"slug": slug, "q": q, "fill": hit, "full": ja.group(1), "opts": ts, "a": ans, "zh": zh})
+        quiz.append({"slug": slug, "q": q, "fill": hit, "full": ja.group(1), "opts": [o for o in ts if o == ans or o in wrong], "a": ans, "zh": zh})
 
 (ROOT / "data/diffs.json").write_text(json.dumps(out, ensure_ascii=False), encoding="utf8")
 (ROOT / "data/diff_quiz.json").write_text(json.dumps(quiz, ensure_ascii=False), encoding="utf8")
