@@ -263,7 +263,7 @@ function dqItem(q,i){return `<div class="kq dq" id="dq-${i}"><div class="kqn">${
  <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${esc(q.a)}${q.fill&&q.fill!==q.a?`　填入：${esc(q.fill)}`:''}</div><div class="ex"><div class="ja dfb">${q.full}</div><div class="zh">${esc(q.zh)}</div></div></div></div>`}
 window.dqPick=(i,btn)=>{const w=document.getElementById('dq-'+i);if(!w||w.classList.contains('done'))return;const q=DQX[i];
  w.querySelectorAll('.kch').forEach(b=>{if(b.dataset.o===q.a)b.classList.add('ok');else if(b===btn)b.classList.add('bad')});w.classList.add('done')};
-let DQX=[],HQ=[];
+let DQX=[],HQ=[],HP=[];
 function dqHtml(list){const base=DQX.length;DQX.push(...list);return list.map((q,k)=>dqItem(q,base+k)).join('')}
 function diffHtml(slug,quiz){const a=DF[slug];if(!a)return'';const qs=quiz?DQ.filter(q=>q.slug===slug):[];
  return `<details class="cmpd"><summary>⚖️ ${esc(a.title)}${qs.length?` <span class="tag">練習 ${qs.length} 題</span>`:''}</summary><div class="dfb">${a.html}</div>
@@ -283,7 +283,7 @@ function renderDq(){DQX=[];const out=$('#out');const srcs=[...new Set(HQ.map(q=>
  const qs=HQ.filter(q=>q.src===hqSrc);const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>!q||(DF[s].title+DF[s].terms.join('')).includes(q));
  out.innerHTML=`<h2>🎯 練習（講義題目）</h2>
  <div style="margin:8px 0">${srcs.map(x=>`<button class="hqs ${x===hqSrc?'on':''}" data-s="${esc(x)}">${esc(x)}</button>`).join(' ')}</div>
- <div class="mut">${qs.length} 題</div>${qs.map((x,i)=>hqItem(x,i)).join('')}
+ <div class="mut">${qs.length} 題</div>${qs.map((x,i)=>(x.pid!=null&&(i===0||qs[i-1].pid!==x.pid)&&HP[x.pid]?`<div class="card" style="white-space:pre-wrap;line-height:2">${HP[x.pid].split('\n').map(l=>ruby(l)).join('\n')}</div>`:'')+hqItem(x,i)).join('')}
  <h2 class="h-c">⚖️ 易混比較（${arts.length} 篇）</h2><input id="dqq" placeholder="搜尋，例如：ために、から、気分" value="${esc(dqQ)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">
  ${arts.map(s=>diffHtml(s,false)).join('')}`;
  out.querySelectorAll('.hqs').forEach(b=>b.onclick=()=>{hqSrc=b.dataset.s;renderDq()});
@@ -307,7 +307,7 @@ async function load(){
    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
-   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];GQ=d.gquiz||[];HQ=d.hquiz||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];GQ=d.gquiz||[];HQ=d.hquiz||[];HP=d.hpass||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
   }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
  }
 }

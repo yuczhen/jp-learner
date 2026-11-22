@@ -108,6 +108,89 @@ def mondai2(doc):
     return qs
 
 
+def join_wraps(lines):
+    out = []
+    for l in lines:
+        l = l.rstrip()
+        if not l.strip():
+            continue
+        if out and len(out[-1]) >= 15 and not re.search(r"[。」）)？?！!]\s*$", out[-1]) and not re.match(r"\s*([●■◆①②③④⑤]|\(\d\)|（\d）|[1-4][\.．])", l):
+            out[-1] = out[-1].rstrip() + l.strip()
+        else:
+            out.append(l.strip())
+    return out
+
+
+def reading(doc):
+    """問題3 (cloze in a passage, 19-23) and 問題4-7 (passage + questions 24-39); answers = red boxes after 問題1/2."""
+    text = "".join(p.get_text() for p in doc)
+    sec = "問題3" + text.split("問題3", 1)[1]
+    sec = re.sub(r"N3 \[文法と読解\] \(\d\)\s*\n", "", sec)
+    sec = re.sub(r"(?m)^[ \t]*\d[ \t]*\n", "", sec)                              # red digits of 問題2 in the text layer
+    boxes = []
+    for p in doc:
+        words = p.get_text("words")
+        for r in sorted(red_boxes(p), key=lambda r: (round(r.y0), r.x0)):
+            boxes.append("".join(w[4] for w in words if pymupdf.Rect(w[:4]).intersects(r)))
+    boxes = boxes[13:]                                                     # first 13 = 問題1
+    passages, qs = [], []
+    # 問題3: cloze
+    c = sec.split("問題4", 1)[0]
+    c = re.split(r"\n\s*-{5,}", c)[0]
+    lines = re.sub(r"（\s*1\.[^）]*）", lambda m: re.sub(r"\s*\n\s*", " ", m.group(0)), c).split("\n")[1:]
+    plines, cq = [], []
+    for l in join_wraps(lines):
+        m = re.fullmatch(r"（\s*1\.(.*)）\s*", l)
+        if m:
+            opts = [re.sub(r"\s+", "", o) for o in re.split(r"\s*[1-4]\.\s*", "1." + m.group(1))[1:]]
+            cq[-1]["opts"] = opts
+            continue
+        plines.append(l)
+        for n in re.findall(r"（\s*(\d{2})\s*）", l):
+            cq.append({"no": int(n)})
+    passages.append("\n".join(plines))
+    for q in cq:
+        q.update({"sec": "問題3", "q": f"（ {q['no']} ）", "pid": 0})
+    qs += cq
+    # 問題4-7
+    rest = "問題4" + sec.split("問題4", 1)[1]
+    head = ""
+    for ch in re.split(r"\n\s*-{5,}[ \t]*", rest):
+        ch = ch.strip("\n")
+        m = re.match(r"\s*(問題\d)", ch)
+        if m:
+            head = m.group(1)
+        qm = re.match(r"\s*(\d{2})\s+(.*)", ch, re.S)
+        if qm and 24 <= int(qm.group(1)) <= 45:
+            body = qm.group(2)
+            k = re.search(r"\n\s*1[\.．]", body)
+            qt = "\n".join(join_wraps(body[:k.start()].split("\n")))
+            ol = join_wraps(re.split(r"\n", body[k.start():]))
+            ops = re.split(r"\s*(?:^|\s)[1-4][\.．]\s*", " " + " ".join(ol))
+            ops = [o.strip() for o in ops if o.strip()]
+            extra = ""
+            m4 = re.match(r"^([①-⑳➀-➉])\s+(.+)$", ops[-1], re.S) if ops else None
+            if m4:                                                         # table printed right after option ④
+                ops[-1] = m4.group(1); extra = m4.group(2)
+            if len(ops) > 4:                                               # e.g. a table printed after the options
+                extra = "\n".join(ops[4:]); ops = ops[:4]
+            qs.append({"sec": head, "no": int(qm.group(1)), "q": qt, "opts": ops, "pid": len(passages) - 1})
+            if extra:
+                passages[-1] += "\n" + re.sub(r"\s+(?=[●①②➁③④])", "\n", extra)
+        else:
+            lines = join_wraps(re.sub(r"^\s*問題\d[^\n]*\n?", "", ch).split("\n"))
+            if lines:
+                passages.append("\n".join(lines))
+    if len(boxes) < len(qs):
+        sys.exit(f"reading: {len(boxes)} boxes for {len(qs)} questions")
+    for q, bx in zip(qs, boxes):
+        m = re.match(r"（?\s*([1-4])[\.．]", bx)
+        q["a"] = int(m.group(1))
+        if len(q.get("opts", [])) != 4:
+            sys.exit(f"reading Q{q['no']}: options {q.get('opts')}")
+    return passages, qs
+
+
 # ---- N3衝刺 11/22: 解析 (question with the answer in brackets, teacher's translation, option notes, ポイント)
 import importlib.util
 _sp = importlib.util.spec_from_file_location("hr", ROOT / "scripts/handout_ruby.py")
@@ -204,7 +287,7 @@ def kaiseki2(print_file, kaiseki_file):
     return qs
 
 
-out = []
+out, PASS = [], []
 for f, label in SRCS:
     doc = pymupdf.open(N3 / f)
     qs = mondai1(doc)
@@ -213,11 +296,20 @@ for f, label in SRCS:
     q2 = mondai2(doc)
     assert [q["no"] for q in q2] == list(range(14, 19)), [q["no"] for q in q2]
     out += [{"src": label, "sec": "問題2", **q} for q in q2]
+    ps, rq = reading(doc)
+    pbase = len(PASS)
+    PASS.extend(ps)
+    out += [{"src": label, **q, "pid": pbase + q["pid"]} for q in rq]
 lab = "N3衝刺 11/22（解析）"
 k1 = kaiseki1(["聽力/W10-1122/解析Ｎ3　語法問題1　1-5番.pdf", "聽力/W10-1122/解析Ｎ３真題語法問題1　6ー13.pdf"])
 assert [q["no"] for q in k1] == list(range(1, 14)), [q["no"] for q in k1]
 out += [{"src": lab, "sec": "問題1", **q} for q in k1]
 out += [{"src": lab, "sec": "問題2", **q} for q in kaiseki2("聽力/W10-1122/1118修正284期Ｎ3衝刺聴解・文字語彙1122第11回目.pdf",
                                                          "聽力/W10-1122/解析　Ｎ3　問題2　14-18　組み立て　.pdf")]
+FWP = str.maketrans({"(": "（", ")": "）"})                            # half-width brackets would render as furigana
+PASS = [t.translate(FWP) for t in PASS]
+for q in out:
+    q["q"] = q["q"].translate(FWP); q["opts"] = [o.translate(FWP) for o in q["opts"]]
+(ROOT / "data/handout_pass.json").write_text(json.dumps(PASS, ensure_ascii=False, indent=1), encoding="utf8")
 (ROOT / "data/handout_quiz.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf8")
 print(len(out), "questions")
