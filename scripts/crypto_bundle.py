@@ -108,10 +108,10 @@ def encrypt(src_dir, pw):
             for x in c["examples"]:
                 x["ruby"] = _kata(x["ruby"])
     # PRINCIPLES.md: drop text that was written / translated by the assistant
-    lt_path = Path(src_dir) / "listen_titles.json"         # titles = source audio file names (no self-written titles)
+    lt_path = Path(src_dir) / "listen_titles.json"         # source audio file (Track no.), shown under the title
     lt = json.loads(lt_path.read_text(encoding="utf8")) if lt_path.exists() else {}
     for it in data.get("listening", []):
-        it["title"] = lt.get(it["id"], it["id"])
+        it["src"] = lt.get(it["id"], "")
     for it in data.get("listening", []):
         # line translations: by Claude (owner approved 2026-11-21, the handouts have none), reviewed line by line
         it["notes"] = []; it["ans"] = ""
