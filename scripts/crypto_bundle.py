@@ -129,7 +129,8 @@ def encrypt(src_dir, pw):
     def _furi(ja, tool, where):
         key = re.sub(r"[\s　]", "", ja)
         def _chunk(c):   # Chinese notes inside examples (no hiragana outside 「」) get no Japanese readings
-            if not c.strip() or (not re.search(r"[ぁ-ゖ]", re.sub(r"「[^」]*」", "", c)) and len(re.findall(r"[\u4e00-\u9fff]", c)) >= 2):
+            if not c.strip() or re.search(r"[說們這為於與從還會對當並則麼嗎呢樣裡過讓給應該錯誤選擇較做]", c) or \
+                    (not re.search(r"[ぁ-ゖ]", re.sub(r"「[^」]*」", "", c)) and len(re.findall(r"[\u4e00-\u9fff]", c)) >= 2):
                 return c
             return _rb2(_tok.tokenize(c, _MODE))
         tool = "\n".join("".join(_chunk(c) for c in re.split(r"(\s+|(?<=[。？！?]))", l)) for l in ja.split("\n"))
@@ -164,6 +165,8 @@ def encrypt(src_dir, pw):
     for q in data.get("hquiz", []):
         q["qr"] = "\n".join(_kata(_furi(l, r, "practice")) for l, r in zip(q["q"].split("\n"), q["qr"].split("\n")))
         q["or"] = [_kata(_furi(o, r, "practice")) for o, r in zip(q["opts"], q["or"])]
+        if q.get("exp"):
+            q["er"] = "\n".join(_kata(_furi(l, l, "practice")) for l in q["exp"].split("\n"))
     (Path(src_dir) / "furi_review.json").write_text(json.dumps(review, ensure_ascii=False, indent=0), encoding="utf8")
     print("furigana:", stats)
     # PRINCIPLES.md: drop text that was written / translated by the assistant

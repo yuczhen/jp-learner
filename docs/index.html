@@ -278,7 +278,7 @@ let dqQ='';
 let hqSrc='';
 function hqItem(q,i){DQX[i]={a:String(q.a)};return `<div class="kq dq" id="dq-${i}"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div>
  ${q.or.map((o,k)=>`<button class="kch" data-o="${k+1}" onclick="dqPick(${i},this)">${k+1}．${ruby(o)}</button>`).join('')}
- <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${q.a}．${ruby(q.or[q.a-1])}</div></div></div>`}
+ <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${q.order?'★ ':''}${q.a}．${ruby(q.or[q.a-1])}</div>${q.order?`<div class="ex">順序：${q.order.join(' → ')}<br>${q.order.map(n=>ruby(q.or[n-1])).join(' ')}</div>`:''}${q.er?`<div class="ex" style="white-space:pre-wrap">${q.er.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}</div></div>`}
 function renderDq(){DQX=[];const out=$('#out');const srcs=[...new Set(HQ.map(q=>q.src))];if(!srcs.includes(hqSrc))hqSrc=srcs[0]||'';
  const qs=HQ.filter(q=>q.src===hqSrc);const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>!q||(DF[s].title+DF[s].terms.join('')).includes(q));
  out.innerHTML=`<h2>🎯 練習（講義題目）</h2>
