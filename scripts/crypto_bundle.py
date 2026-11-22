@@ -80,6 +80,12 @@ def encrypt(src_dir, pw):
         used = {s for v in data["dmatch"].values() for s in v}
         data["diffs"] = {s: {k: dfs[s][k] for k in ("title", "terms", "html", "url", "vip")} for s in used}
     # practice quizzes built by script (dquiz/gquiz) removed 2026-11-22: owner wants only questions printed in the handouts
+    hq_path = Path(src_dir) / "handout_quiz.json"         # questions printed in the handouts (answer = red box)
+    if hq_path.exists():
+        from build_examples import tok, MODE, ruby as _rb
+        R = lambda t: _kata(_rb(tok.tokenize(t, MODE))) if t.strip() else t
+        data["hquiz"] = [{**q, "qr": "\n".join(R(l) for l in q["q"].split("\n")), "or": [R(o) for o in q["opts"]]}
+                         for q in json.loads(hq_path.read_text(encoding="utf8"))]
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
         data["jlpt"] = json.loads(jl_path.read_text(encoding="utf8"))

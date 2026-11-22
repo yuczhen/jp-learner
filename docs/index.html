@@ -89,7 +89,7 @@ a{color:var(--acc)}
 <h1>日檢JLPT每日學習 <span class="mut" id="cd"></span></h1>
 <div class="bar">
   <select id="day"></select>
-  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button> <button id="tpbtn">🗂 主題總表</button><button id="dqbtn">🎯 易混練習</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
+  <button id="gsbtn">🔍 查文法</button><button id="cmpbtn">📊 對照表</button><button id="kobtn">📝 考古題</button> <button id="tpbtn">🗂 主題總表</button><button id="dqbtn">🎯 練習</button><button id="am">☀️ 早</button><button id="pm">🌙 晚</button>
   <label class="mut"><input type="checkbox" id="hide"> 隱藏已熟悉</label>
 </div>
 <div id="out"></div>
@@ -263,7 +263,7 @@ function dqItem(q,i){return `<div class="kq dq" id="dq-${i}"><div class="kqn">${
  <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${esc(q.a)}${q.fill&&q.fill!==q.a?`　填入：${esc(q.fill)}`:''}</div><div class="ex"><div class="ja dfb">${q.full}</div><div class="zh">${esc(q.zh)}</div></div></div></div>`}
 window.dqPick=(i,btn)=>{const w=document.getElementById('dq-'+i);if(!w||w.classList.contains('done'))return;const q=DQX[i];
  w.querySelectorAll('.kch').forEach(b=>{if(b.dataset.o===q.a)b.classList.add('ok');else if(b===btn)b.classList.add('bad')});w.classList.add('done')};
-let DQX=[];
+let DQX=[],HQ=[];
 function dqHtml(list){const base=DQX.length;DQX.push(...list);return list.map((q,k)=>dqItem(q,base+k)).join('')}
 function diffHtml(slug,quiz){const a=DF[slug];if(!a)return'';const qs=quiz?DQ.filter(q=>q.slug===slug):[];
  return `<details class="cmpd"><summary>⚖️ ${esc(a.title)}${qs.length?` <span class="tag">練習 ${qs.length} 題</span>`:''}</summary><div class="dfb">${a.html}</div>
@@ -274,19 +274,19 @@ function dayDiffs(day,slot,b){const l=DM[day.date+'|'+slot]||[];const gq=b?GQ.fi
 function learnedGids(){const now=P.days[today()].date,out=new Set();P.days.forEach(d=>{if(d.date<=now)d.batches.forEach(b=>(b.grammar||[]).forEach(g=>out.add(g)))});return out}
 function learnedSlugs(){const now=P.days[today()].date,out=new Set();for(const k in DM){if(k.slice(0,10)<=now)DM[k].forEach(s=>out.add(s))}return out}
 let dqQ='';
-function renderDq(){DQX=[];const out=$('#out');const ok=dqAll?null:learnedSlugs();
- const okg=dqAll?null:learnedGids();const pool=dqMode==='g'?GQ.filter(q=>!okg||okg.has(q.gid)):DQ.filter(q=>!ok||ok.has(q.slug));
- if(!dqSet||dqSet.all!==dqAll||dqSet.mode!==dqMode){const a=[...pool];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}dqSet={all:dqAll,mode:dqMode,list:a.slice(0,10)}}
- const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>(!ok||ok.has(s))&&(!q||(DF[s].title+DF[s].terms.join('')).includes(q)));
- out.innerHTML=`<h2>🎯 易混練習</h2>
- <div style="margin:8px 0"><button class="dqm ${dqMode==='g'?'on':''}" data-m="g">相似文法</button> <button class="dqm ${dqMode==='d'?'on':''}" data-m="d">單字・用法（時雨差別文章）</button></div>
- <div style="margin:8px 0"><button class="dqs ${dqAll?'':'on'}" data-a="0">到今天學過的</button> <button class="dqs ${dqAll?'on':''}" data-a="1">全部</button> <button id="dqnew">🔀 換一組</button> <span class="mut">題庫 ${pool.length} 題</span></div>
- ${dqHtml(dqSet.list)}
+// practice = questions printed in the owner's handouts (question, options, answer = the handout's red box)
+let hqSrc='';
+function hqItem(q,i){DQX[i]={a:String(q.a)};return `<div class="kq dq" id="dq-${i}"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div>
+ ${q.or.map((o,k)=>`<button class="kch" data-o="${k+1}" onclick="dqPick(${i},this)">${k+1}．${ruby(o)}</button>`).join('')}
+ <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${q.a}．${ruby(q.or[q.a-1])}</div></div></div>`}
+function renderDq(){DQX=[];const out=$('#out');const srcs=[...new Set(HQ.map(q=>q.src))];if(!srcs.includes(hqSrc))hqSrc=srcs[0]||'';
+ const qs=HQ.filter(q=>q.src===hqSrc);const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>!q||(DF[s].title+DF[s].terms.join('')).includes(q));
+ out.innerHTML=`<h2>🎯 練習（講義題目）</h2>
+ <div style="margin:8px 0">${srcs.map(x=>`<button class="hqs ${x===hqSrc?'on':''}" data-s="${esc(x)}">${esc(x)}</button>`).join(' ')}</div>
+ <div class="mut">${qs.length} 題</div>${qs.map((x,i)=>hqItem(x,i)).join('')}
  <h2 class="h-c">⚖️ 易混比較（${arts.length} 篇）</h2><input id="dqq" placeholder="搜尋，例如：ために、から、気分" value="${esc(dqQ)}" style="width:100%;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--btn);color:var(--fg)">
- ${arts.map(s=>diffHtml(s,true)).join('')}`;
- out.querySelectorAll('.dqm').forEach(b=>b.onclick=()=>{dqMode=b.dataset.m;renderDq()});
- out.querySelectorAll('.dqs').forEach(b=>b.onclick=()=>{dqAll=b.dataset.a==='1';renderDq()});
- $('#dqnew').onclick=()=>{dqSet=null;renderDq();window.scrollTo(0,0)};
+ ${arts.map(s=>diffHtml(s,false)).join('')}`;
+ out.querySelectorAll('.hqs').forEach(b=>b.onclick=()=>{hqSrc=b.dataset.s;renderDq()});
  const qi=$('#dqq');qi.oninput=e=>{dqQ=e.target.value;const p=qi.selectionStart;renderDq();const n=$('#dqq');n.focus();n.setSelectionRange(p,p)}}
 function render(){DQX=[];if(view==='dq'){document.body.dataset.slot=cur.s;return renderDq()}if(view==='tp'){document.body.dataset.slot=cur.s;return renderTp()}if(view==='ko'){document.body.dataset.slot=cur.s;return renderKo()}if(view==='gs'){document.body.dataset.slot=cur.s;return renderGs()}if(view==='cmp'){document.body.dataset.slot=cur.s;return renderCmp()}const day=P.days[cur.d];$('#cd').textContent=`Day ${day.day} · ${day.date}`;
  const b=day.batches.find(x=>x.slot===cur.s)||day.batches[0];
@@ -307,7 +307,7 @@ async function load(){
    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:buf.slice(4,20),iterations:600000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);KEY=key;
    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(20,32)},key,buf.slice(32));
-   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];GQ=d.gquiz||[];if(!DQ.length&&!GQ.length){const qb=document.getElementById('dqbtn');if(qb)qb.style.display='none'}return [d.plan,d.grammar,d.vocab,d.compare||[]];
+   store.set('jpl_pw',pw);const d=JSON.parse(new TextDecoder().decode(pt));AIDX=d.audio_index||{};LS=d.listening||[];KO=d.jlpt||null;TP=d.topics||null;DF=d.diffs||{};DM=d.dmatch||{};DQ=d.dquiz||[];GQ=d.gquiz||[];HQ=d.hquiz||[];return [d.plan,d.grammar,d.vocab,d.compare||[]];
   }catch(e){store.set('jpl_pw',null);if(tries>4)throw new Error('解密失敗')}
  }
 }
