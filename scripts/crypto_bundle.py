@@ -100,24 +100,72 @@ def encrypt(src_dir, pw):
                 e["ex"] = {"ja": _clean(e["ex"]["ja"]), "ruby": _clean(e["ex"]["ruby"]), "zh": e["ex"]["zh"], "src": e["ex"].get("src", "")}
             elif e["id"] in ex:
                 e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"], "src": ex[e["id"]].get("src", "")}
-    # furigana as printed by sigure for sigure sentences (instead of tool-made readings)
+    # furigana: printed by the source first (sigure pages, handout PDFs); the tool (Sudachi) only fills kanji the
+    # source left without furigana, and every tool reading is listed in data/furi_review.json for checking.
+    # Checked corrections (Claude, owner approved 2026-11-22) come from data/furi_fix.json {plain sentence: ruby}.
+    import furi
+    # drop "examples" that are really sigure's Chinese explanation text (scraping mistake), not Japanese sentences
+    _ZH = re.compile(r"[的是為麼們這說會與從還裡個過對於時當並則]")
+    def _is_zh(t):
+        t2 = re.sub(r"「[^」]*」", "", t)
+        return len(_ZH.findall(t2)) >= 2 and len(re.findall(r"[ぁ-ゖァ-ヺ]", t2)) <= len(_ZH.findall(t2)) * 2
+    for e in data["vocab"]:
+        if e.get("ex") and _is_zh(e["ex"]["ja"]):
+            e.pop("ex")
+    for g in data["grammar"].values():
+        g["examples"] = [x for x in g["examples"] if not _is_zh(x["ja"])]
     sr_path = Path(src_dir) / "sigure_ruby.json"
     SR = {re.sub(r"[\s　]", "", k): v for k, v in json.loads(sr_path.read_text(encoding="utf8")).items()} if sr_path.exists() else {}
-    def _src_ruby(x):
-        r = SR.get(re.sub(r"[\s　]", "", x["ja"]))
-        if r:
-            x["ruby"] = r
+    ff_path = Path(src_dir) / "furi_fix.json"      # [context in sentence, kanji, tool reading, checked reading]
+    FIX = json.loads(ff_path.read_text(encoding="utf8")) if ff_path.exists() else []
+    def _fix(ja, r):
+        for fx in FIX:
+            c, old, new = (fx[0], f"{fx[1]}({fx[2]})", f"{fx[1]}({fx[3]})") if len(fx) == 4 else fx
+            if c in ja and old in r:
+                r = r.replace(old, new); stats["checked"] += 1
+        return r
+    review, stats = [], {"sigure": 0, "handout": 0, "checked": 0, "tool": 0}
+    from build_examples import tok as _tok, MODE as _MODE, ruby as _rb2
+    def _furi(ja, tool, where):
+        key = re.sub(r"[\s　]", "", ja)
+        def _chunk(c):   # Chinese notes inside examples (no hiragana outside 「」) get no Japanese readings
+            if not c.strip() or (not re.search(r"[ぁ-ゖ]", re.sub(r"「[^」]*」", "", c)) and len(re.findall(r"[\u4e00-\u9fff]", c)) >= 2):
+                return c
+            return _rb2(_tok.tokenize(c, _MODE))
+        tool = "\n".join("".join(_chunk(c) for c in re.split(r"(\s+|(?<=[。？！?]))", l)) for l in ja.split("\n"))
+        if key in SR:
+            stats["sigure"] += 1; return SR[key]
+        h = furi.handout(ja)
+        if h:
+            r, used = furi.merge(h[0], h[1], tool)
+            if r is not None:
+                stats["handout"] += 1
+                if used:
+                    review.append({"t": h[0], "w": [[h[0][a:b], y] for a, b, y in used], "at": where})
+                return _fix(ja, r)
+        pl, rng = furi.parse(tool)
+        if rng:
+            stats["tool"] += 1
+            review.append({"t": pl, "w": [[pl[a:b], y] for a, b, y in rng], "at": where})
+        return _fix(ja, tool)
     for e in data["vocab"]:
-        if e.get("ex") and e["ex"].get("src") == "時雨":
-            _src_ruby(e["ex"]); e["ex"]["ruby"] = _kata(e["ex"]["ruby"])
+        if e.get("ex"):
+            e["ex"]["ruby"] = _kata(_furi(e["ex"]["ja"], e["ex"]["ruby"], "vocab"))
     for g in data["grammar"].values():
         for x in g["examples"]:
-            _src_ruby(x)
-            x["ruby"] = _kata(x["ruby"])
+            x["ruby"] = _kata(_furi(x["ja"], x["ruby"], "grammar"))
             x["ja"] = _clean(x["ja"])
         for c in g.get("class", []):
             for x in c["examples"]:
-                x["ruby"] = _kata(x["ruby"])
+                x["ruby"] = _kata(_furi(x.get("ja") or furi.parse(x["ruby"])[0], x["ruby"], "class"))
+    for it in data.get("listening", []):
+        for ln in it.get("lines", []):
+            ln["ruby"] = _kata(_furi(ln["ja"], ln["ruby"], "listening"))
+    for q in data.get("hquiz", []):
+        q["qr"] = "\n".join(_kata(_furi(l, r, "practice")) for l, r in zip(q["q"].split("\n"), q["qr"].split("\n")))
+        q["or"] = [_kata(_furi(o, r, "practice")) for o, r in zip(q["opts"], q["or"])]
+    (Path(src_dir) / "furi_review.json").write_text(json.dumps(review, ensure_ascii=False, indent=0), encoding="utf8")
+    print("furigana:", stats)
     # PRINCIPLES.md: drop text that was written / translated by the assistant
     lt_path = Path(src_dir) / "listen_titles.json"         # source audio file (Track no.), shown under the title
     lt = json.loads(lt_path.read_text(encoding="utf8")) if lt_path.exists() else {}
