@@ -95,7 +95,14 @@ def encrypt(src_dir, pw):
         hq = json.loads(hq_path.read_text(encoding="utf8"))
         hx_path = Path(src_dir) / "handout_quiz_extra.json"   # tests shown in the class videos (answers on screen)
         if hx_path.exists():
-            hq += json.loads(hx_path.read_text(encoding="utf8"))
+            cur = None
+            for q in json.loads(hx_path.read_text(encoding="utf8")):
+                if q.get("passage"):                          # passage shown above its questions
+                    data.setdefault("hpass", []).append(q.pop("passage")); cur = len(data["hpass"]) - 1
+                    q["pid"] = cur
+                elif q.pop("same_passage", False):
+                    q["pid"] = cur
+                hq.append(q)
         data["hquiz"] = [{**q, "qr": "\n".join(R(l) for l in q["q"].split("\n")), "or": [R(o) for o in q["opts"]]} for q in hq]
     jl_path = Path(src_dir) / "jlpt.json"
     if jl_path.exists():
@@ -193,7 +200,8 @@ def encrypt(src_dir, pw):
     for it in data.get("listening", []):
         # line translations: by Claude (owner approved 2026-11-21, the handouts have none), reviewed line by line
         it["notes"] = []; it["ans"] = ""
-        for q_ in it.get("qs", []) or []: q_["e"] = ""
+        for q_ in it.get("qs", []) or []:
+            if not it.get("x"): q_["e"] = ""
     for st in (data.get("jlpt") or {}).get("sets", []):
         for sec in st["sections"]:
             for it in sec["items"]:
