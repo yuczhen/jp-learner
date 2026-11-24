@@ -233,7 +233,7 @@ def encrypt(src_dir, pw):
         # line translations: by Claude (owner approved 2026-11-21, the handouts have none), reviewed line by line
         it["notes"] = []; it["ans"] = ""
         for q_ in it.get("qs", []) or []:
-            if not it.get("x"): q_["e"] = ""
+            if not it.get("x") and not str(q_.get("e", "")).startswith("ポイント"): q_["e"] = ""   # teacher's ポイント kept
     js_path, jz_path = Path(src_dir) / "jlpt_script.json", Path(src_dir) / "jlpt_script_zh.json"
     JS = json.loads(js_path.read_text(encoding="utf8")) if js_path.exists() else {}
     JZ = json.loads(jz_path.read_text(encoding="utf8")) if jz_path.exists() else {}
