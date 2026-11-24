@@ -237,10 +237,14 @@ def encrypt(src_dir, pw):
     js_path, jz_path = Path(src_dir) / "jlpt_script.json", Path(src_dir) / "jlpt_script_zh.json"
     JS = json.loads(js_path.read_text(encoding="utf8")) if js_path.exists() else {}
     JZ = json.loads(jz_path.read_text(encoding="utf8")) if jz_path.exists() else {}
+    gl_path = Path(src_dir) / "jlpt_glink.json"
+    GL = json.loads(gl_path.read_text(encoding="utf8")) if gl_path.exists() else {}
     for st in (data.get("jlpt") or {}).get("sets", []):
         for sec in st["sections"]:
             for it in sec["items"]:
                 it["e"] = ""; it.pop("script", None)
+                if it["id"] in GL:                          # sigure grammar cards for the patterns in the options
+                    it["gl"] = [[lab, gid] for lab, gid in GL[it["id"]] if gid in data["grammar"]]
                 if it["id"] in JS:                          # official JLPT script (printed furigana) + Claude translation
                     it["os"] = [{"r": _kata(l), "zh": JZ.get(f"{it['id']}.{i}", "")} for i, l in enumerate(JS[it["id"]])]
     raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()

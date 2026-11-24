@@ -213,6 +213,7 @@ function koItem(it,sec){const q=ruby(it.q||'').replace(/【([^】]+)】/g,'<u>$1
  ${sec==='L'?`<div style="margin:6px 0"><button id="kp-${it.audio}" onclick="playKo('${it.audio}')">▶ 播放</button> <span class="mut">先聽、選好，再打開答案</span></div>`:''}
  ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${ruby(x)}</button>`).join('')}
  <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${ruby(it.c[it.a-1])}</div><div class="kexp">${exp}</div>${it.tx?`<div class="ex" style="white-space:pre-wrap"><div class="mut">老師解析（${esc(it.txs)}）</div>${it.tx.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}
+ ${it.gl?`<div class="ex"><div class="mut">選項裡的句型（時雨文法卡，點開看意思、接續、例句）</div>${it.gl.map(([lab,id])=>`<details><summary><b>${esc(lab)}</b> → ${esc((G[id]||{}).title||id)}</summary>${gcard(id)}</details>`).join('')}</div>`:''}
  ${it.os?`<details open><summary>逐字稿（JLPT 官網聴解スクリプト）</summary><div class="mut" style="margin:4px 0">中譯：Claude 翻譯（官網沒有中譯）</div>${it.os.map(l=>`<div class="ex"><div class="ja">${ruby(l.r)}</div>${l.zh?`<div class="zh">${esc(l.zh)}</div>`:''}</div>`).join('')}</details>`:''}</details></div>`}
 function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card">尚無考古題資料。</div>';return}
  const set=KO.sets[0];const plan=KO.plan[koD];
