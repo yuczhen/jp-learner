@@ -212,14 +212,14 @@ def encrypt(src_dir, pw):
     # JLPT sample questions that also appear in the teacher's handouts: attach the teacher's 解析 (same answer only)
     _N = lambda t: re.sub(r"[^ぁ-ゖァ-ヺ一-龥々ー]", "", re.sub(r"\([ぁ-ゖー]+\)", "", t or ""))
     _hk = [(_N(q["q"]), q) for q in data.get("hquiz", []) if q.get("er")]
+    _oc = lambda cs: tuple(sorted(_N(c) for c in cs))
     for st in (data.get("jlpt") or {}).get("sets", []):
         for sec in st["sections"]:
             for it in sec["items"]:
-                k = _N(it.get("q", ""))
-                if len(k) < 8:
-                    continue
-                m = [q for kk, q in _hk if q["a"] == it["a"] and len(kk) >= 8 and
-                     (k[:10] == kk[:10] or (len(k) >= 14 and len(kk) >= 14 and (k[2:14] in kk or kk[2:14] in k)))]
+                k, oc = _N(it.get("q", "")), _oc(it.get("c", []))
+                m = [q for kk, q in _hk if q["a"] == it["a"] and (
+                     (len(k) >= 8 and len(kk) >= 8 and (k[:10] == kk[:10] or (len(k) >= 14 and len(kk) >= 14 and (k[2:14] in kk or kk[2:14] in k))))
+                     or (len(oc) >= 3 and oc == _oc(q["opts"]) and sum(map(len, oc)) >= 8))]
                 if m:
                     it["tx"], it["txs"] = m[0]["er"], f"{m[0]['src']} 第{m[0]['no']}題"
     (Path(src_dir) / "furi_review.json").write_text(json.dumps(review, ensure_ascii=False, indent=0), encoding="utf8")
