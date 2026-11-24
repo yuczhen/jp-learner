@@ -234,10 +234,15 @@ def encrypt(src_dir, pw):
         it["notes"] = []; it["ans"] = ""
         for q_ in it.get("qs", []) or []:
             if not it.get("x"): q_["e"] = ""
+    js_path, jz_path = Path(src_dir) / "jlpt_script.json", Path(src_dir) / "jlpt_script_zh.json"
+    JS = json.loads(js_path.read_text(encoding="utf8")) if js_path.exists() else {}
+    JZ = json.loads(jz_path.read_text(encoding="utf8")) if jz_path.exists() else {}
     for st in (data.get("jlpt") or {}).get("sets", []):
         for sec in st["sections"]:
             for it in sec["items"]:
                 it["e"] = ""; it.pop("script", None)
+                if it["id"] in JS:                          # official JLPT script (printed furigana) + Claude translation
+                    it["os"] = [{"r": _kata(l), "zh": JZ.get(f"{it['id']}.{i}", "")} for i, l in enumerate(JS[it["id"]])]
     raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()
     salt, iv = get_salt(), os.urandom(12)
     OUT.parent.mkdir(parents=True, exist_ok=True)
