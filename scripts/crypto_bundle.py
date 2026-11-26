@@ -123,6 +123,14 @@ def encrypt(src_dir, pw):
                 e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"], "src": ex[e["id"]].get("src", "")}
         # examples taken from listening scripts: reuse that line's translation in data/listening.json
         # (teacher's slide translation when the line has t=1, otherwise the approved Claude translation -> zc=1)
+        # handout-PDF examples without a printed translation: Claude translation (owner approved 2026-11-27)
+        cz_ = Path(src_dir) / "examples_zh_claude.json"
+        if cz_.exists():
+            CZ = json.loads(cz_.read_text(encoding="utf8"))
+            for e in data["vocab"]:
+                x_ = e.get("ex")
+                if x_ and not x_["zh"] and ex.get(e["id"], {}).get("ja") in CZ:
+                    x_["zh"], x_["zc"] = CZ[ex[e["id"]]["ja"]], 1
         lp_ = Path(src_dir) / "listening.json"
         if lp_.exists():
             _n = lambda s: re.sub(r"[\s、。，,.!！?？「」『』()（）]", "", s)
