@@ -121,6 +121,25 @@ def encrypt(src_dir, pw):
                 e["ex"] = {"ja": _clean(e["ex"]["ja"]), "ruby": _clean(e["ex"]["ruby"]), "zh": e["ex"]["zh"], "src": e["ex"].get("src", "")}
             elif e["id"] in ex:
                 e["ex"] = {"ja": _clean(ex[e["id"]]["ja"]), "ruby": _clean(ex[e["id"]]["ruby"]), "zh": ex[e["id"]]["zh"], "src": ex[e["id"]].get("src", "")}
+        # examples taken from listening scripts: reuse that line's translation in data/listening.json
+        # (teacher's slide translation when the line has t=1, otherwise the approved Claude translation -> zc=1)
+        lp_ = Path(src_dir) / "listening.json"
+        if lp_.exists():
+            _n = lambda s: re.sub(r"[\s、。，,.!！?？「」『』()（）]", "", s)
+            LZ = {}
+            for it_ in json.loads(lp_.read_text(encoding="utf8")):
+                for ln in it_.get("lines", []):
+                    if ln.get("ja") and ln.get("zh"):
+                        LZ.setdefault(_n(ln["ja"]), (ln["zh"], ln.get("t", 0)))
+            for e in data["vocab"]:
+                x_ = e.get("ex")
+                if not x_ or x_["zh"] or x_.get("src") != "聽力":
+                    continue
+                k_ = _n(x_["ja"])
+                if k_ in LZ:
+                    x_["zh"], t_ = LZ[k_]
+                    if not t_:
+                        x_["zc"] = 1
     # furigana: printed by the source first (sigure pages, handout PDFs); the tool (Sudachi) only fills kanji the
     # source left without furigana, and every tool reading is listed in data/furi_review.json for checking.
     # Checked corrections (Claude, owner approved 2026-11-22) come from data/furi_fix.json {plain sentence: ruby}.
