@@ -209,6 +209,14 @@ def encrypt(src_dir, pw):
         elif q.get("exp"):
             q["er"] = "\n".join(_kata(_furi(l, l, "practice")) for l in q["exp"].split("\n"))
     data["hpass"] = ["\n".join(_kata(_furi(l, l, "practice")) for l in t.split("\n")) for t in data.get("hpass", [])]
+    for st in (data.get("jlpt") or {}).get("sets", []):       # passage translation on every question of the passage
+        for sec in st["sections"]:
+            last = {}
+            for it in sec["items"]:
+                if it.get("pz"):
+                    last[it.get("p", "")] = it["pz"]
+                elif it.get("p") in last:
+                    it["pz"] = last[it["p"]]
     # JLPT sample questions that also appear in the teacher's handouts: attach the teacher's 解析 (same answer only)
     _N = lambda t: re.sub(r"[^ぁ-ゖァ-ヺ一-龥々ー]", "", re.sub(r"\([ぁ-ゖー]+\)", "", t or ""))
     _hk = [(_N(q["q"]), q) for q in data.get("hquiz", []) if q.get("er")]
@@ -237,12 +245,27 @@ def encrypt(src_dir, pw):
     js_path, jz_path = Path(src_dir) / "jlpt_script.json", Path(src_dir) / "jlpt_script_zh.json"
     JS = json.loads(js_path.read_text(encoding="utf8")) if js_path.exists() else {}
     JZ = json.loads(jz_path.read_text(encoding="utf8")) if jz_path.exists() else {}
+    CX = {}                                                 # explanations by Claude (owner approved 2026-11-26)
+    for fp in sorted((Path(src_dir) / "cx").glob("jlpt_*.json")):
+        CX.update(json.loads(fp.read_text(encoding="utf8")))
     gl_path = Path(src_dir) / "jlpt_glink.json"
     GL = json.loads(gl_path.read_text(encoding="utf8")) if gl_path.exists() else {}
     for st in (data.get("jlpt") or {}).get("sets", []):
         for sec in st["sections"]:
             for it in sec["items"]:
+                old_e = it.get("e", "")
                 it["e"] = ""; it.pop("script", None)
+                c_ = CX.get(it["id"])
+                if c_:
+                    it["cx"] = c_
+                elif it["id"].startswith("L") and old_e:   # earlier Claude notes for listening, now allowed
+                    it["cx"] = {"txt": old_e}
+                if it["id"] in CX.get("_pz", {}):
+                    it["pz"] = CX["_pz"][it["id"]]
+                for k_, v_ in CX.items():
+                    if k_.startswith("問題") and it.get("g", "").startswith(k_.split(" ")[0]) and k_.split(" ")[1][:2] in it.get("g", "") \
+                            and (it["id"][0] == "L") == (k_.split(" ")[1][:2] in ("課題", "ポイ", "概要", "発話", "即時")):
+                        it["sx"] = v_
                 if it["id"] in GL:                          # sigure grammar cards for the patterns in the options
                     it["gl"] = [[lab, gid] for lab, gid in GL[it["id"]] if gid in data["grammar"]]
                 if it["id"] in JS:                          # official JLPT script (printed furigana) + Claude translation

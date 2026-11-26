@@ -212,9 +212,17 @@ function koItem(it,sec){const q=ruby(it.q||'').replace(/【([^】]+)】/g,'<u>$1
  ${it.pic?`<img data-pic="${it.pic}" alt="圖片載入中…" style="max-width:100%;width:560px;border-radius:8px;background:#fff;margin:6px 0;display:block">`:''}
  ${sec==='L'?`<div style="margin:6px 0"><button id="kp-${it.audio}" onclick="playKo('${it.audio}')">▶ 播放</button> <span class="mut">先聽、選好，再打開答案</span></div>`:''}
  ${it.c.map((x,i)=>`<button class="kch" data-i="${i+1}" onclick="koPick('${it.id}',${i+1})">${i+1}．${ruby(x)}</button>`).join('')}
- <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${ruby(it.c[it.a-1])}</div><div class="kexp">${exp}</div>${it.tx?`<div class="ex" style="white-space:pre-wrap"><div class="mut">老師解析（${esc(it.txs)}）</div>${it.tx.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}
+ <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${ruby(it.c[it.a-1])}</div><div class="kexp">${exp}</div>${koCx(it)}${it.tx?`<div class="ex" style="white-space:pre-wrap"><div class="mut">老師解析（${esc(it.txs)}）</div>${it.tx.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}
  ${it.gl?`<div class="ex"><div class="mut">選項裡的句型（時雨文法卡，點開看意思、接續、例句）</div>${it.gl.map(([lab,id])=>`<details><summary><b>${esc(lab)}</b> → ${esc((G[id]||{}).title||id)}</summary>${gcard(id)}</details>`).join('')}</div>`:''}
  ${it.os?`<details open><summary>逐字稿（JLPT 官網聴解スクリプト）</summary><div class="mut" style="margin:4px 0">中譯：Claude 翻譯（官網沒有中譯）</div>${it.os.map(l=>`<div class="ex"><div class="ja">${ruby(l.r)}</div>${l.zh?`<div class="zh">${esc(l.zh)}</div>`:''}</div>`).join('')}</details>`:''}</details></div>`}
+function koCx(it){const c=it.cx;if(!c&&!it.sx&&!it.pz)return'';let h='<div class="ex" style="white-space:pre-wrap"><div class="mut">解說：Claude（來源沒有解說；答案為官網正答）</div>';
+ if(it.pz)h+=`<details><summary>文章中譯</summary><div>${esc(it.pz)}</div></details>`;
+ if(c&&c.zh)h+=`<div><b>整句意思</b>　${esc(c.zh)}</div>`;
+ if(c&&c.why)h+=`<div style="margin-top:4px"><b>選項分析</b></div>${c.why.map((w,i)=>`<div>${i+1}．${esc(w)}</div>`).join('')}`;
+ if(c&&c.txt)h+=`<div>${esc(c.txt)}</div>`;
+ if(c&&c.pt)h+=`<div style="margin-top:4px"><b>重點</b>　${esc(c.pt)}</div>`;
+ if(it.sx)h+=`<details style="margin-top:4px"><summary>這類題的重點整理</summary><div>${esc(it.sx)}</div></details>`;
+ return h+'</div>'}
 function renderKo(){const out=$('#out');if(!KO){out.innerHTML='<div class="card">尚無考古題資料。</div>';return}
  const set=KO.sets[0];const plan=KO.plan[koD];
  let h=`<h2>📝 JLPT N3 考古題練習</h2><div class="mut">${esc(set.title)}（官網公開的N3樣題；共 ${KO.days} 天，每天四個大項各一些）</div>
