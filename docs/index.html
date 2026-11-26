@@ -215,7 +215,7 @@ function koItem(it,sec){const q=ruby(it.q||'').replace(/【([^】]+)】/g,'<u>$1
  <details ontoggle="koOpen('${it.id}',${it.a},this)"><summary>看答案＋解說</summary><div class="abox"><span class="lab ok">答案</span>${it.a}．${ruby(it.c[it.a-1])}</div><div class="kexp">${exp}</div>${koCx(it)}${it.tx?`<div class="ex" style="white-space:pre-wrap"><div class="mut">老師解析（${esc(it.txs)}）</div>${it.tx.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}
  ${it.gl?`<div class="ex"><div class="mut">選項裡的句型（時雨文法卡，點開看意思、接續、例句）</div>${it.gl.map(([lab,id])=>`<details><summary><b>${esc(lab)}</b> → ${esc((G[id]||{}).title||id)}</summary>${gcard(id)}</details>`).join('')}</div>`:''}
  ${it.os?`<details open><summary>逐字稿（JLPT 官網聴解スクリプト）</summary><div class="mut" style="margin:4px 0">中譯：Claude 翻譯（官網沒有中譯）</div>${it.os.map(l=>`<div class="ex"><div class="ja">${ruby(l.r)}</div>${l.zh?`<div class="zh">${esc(l.zh)}</div>`:''}</div>`).join('')}</details>`:''}</details></div>`}
-function koCx(it){const c=it.cx;if(!c&&!it.sx&&!it.pz)return'';let h='<div class="ex" style="white-space:pre-wrap"><div class="mut">解說：Claude（來源沒有解說；答案為官網正答）</div>';
+function koCx(it){const c=it.cx;if(!c&&!it.sx&&!it.pz)return'';let h=`<div class="ex" style="white-space:pre-wrap"><div class="mut">解說：Claude（來源沒有解說；答案為${it.src&&/^\d{4}$/.test(it.src)?'官網正答':'講義／老師的答案'}）</div>`;
  if(it.pz)h+=`<details><summary>文章中譯</summary><div>${esc(it.pz)}</div></details>`;
  if(c&&c.zh)h+=`<div><b>整句意思</b>　${esc(c.zh)}</div>`;
  if(c&&c.why)h+=`<div style="margin-top:4px"><b>選項分析</b></div>${c.why.map((w,i)=>`<div>${i+1}．${esc(w)}</div>`).join('')}`;
@@ -288,7 +288,7 @@ let hqSrc='';
 function hqItem(q,i){if(q.kind==='write')return `<div class="kq dq"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div><details><summary>看答案</summary><div class="abox"><span class="lab ok">答案</span>${ruby(q.ar||q.ans)}</div></details></div>`;
  DQX[i]={a:String(q.a)};return `<div class="kq dq" id="dq-${i}"><div class="mut">${esc(q.sec)}　${q.no}</div><div class="kqn">${q.qr.split('\n').map(l=>ruby(l)).join('<br>')}</div>
  ${q.or.map((o,k)=>`<button class="kch" data-o="${k+1}" onclick="dqPick(${i},this)">${k+1}．${ruby(o)}</button>`).join('')}
- <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${q.order?'★ ':''}${q.a}．${ruby(q.or[q.a-1])}</div>${q.order?`<div class="ex">順序：${q.order.join(' → ')}<br>${q.order.map(n=>ruby(q.or[n-1])).join(' ')}</div>`:''}${q.er?`<div class="ex" style="white-space:pre-wrap">${q.er.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}</div></div>`}
+ <div class="dqr"><div class="abox"><span class="lab ok">答案</span>${q.order?'★ ':''}${q.a}．${ruby(q.or[q.a-1])}</div>${q.order?`<div class="ex">順序：${q.order.join(' → ')}<br>${q.order.map(n=>ruby(q.or[n-1])).join(' ')}</div>`:''}${q.er?`<div class="ex" style="white-space:pre-wrap">${q.er.split('\n').map(l=>ruby(l.trim())).join('\n')}</div>`:''}${koCx(q)}</div></div>`}
 function renderDq(){DQX=[];const out=$('#out');const srcs=[...new Set(HQ.map(q=>q.src))];if(!srcs.includes(hqSrc))hqSrc=srcs[0]||'';
  const qs=HQ.filter(q=>q.src===hqSrc);const q=dqQ.trim();const arts=Object.keys(DF).filter(s=>!q||(DF[s].title+DF[s].terms.join('')).includes(q));
  out.innerHTML=`<h2>🎯 練習（講義題目）</h2>

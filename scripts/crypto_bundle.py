@@ -183,6 +183,7 @@ def encrypt(src_dir, pw):
     for it in data.get("listening", []):
         for ln in it.get("lines", []):
             ln["ruby"] = _kata(_furi(ln["ja"], ln["ruby"], "listening"))
+    HCX = {}                                                # practice explanations by Claude (owner approved 2026-11-26)
     for q in data.get("hquiz", []):
         q["qr"] = "\n".join(_kata(_furi(l, r, "practice")) for l, r in zip(q["q"].split("\n"), q["qr"].split("\n")))
         q["or"] = [_kata(_furi(o, r, "practice")) for o, r in zip(q["opts"], q["or"])]
@@ -190,6 +191,16 @@ def encrypt(src_dir, pw):
             pass
         if q.get("ans"):
             q["ar"] = _kata(_furi(q["ans"], q["ans"], "practice"))
+        if not HCX:
+            for fp in sorted((Path(src_dir) / "cx").glob("hq_*.json")):
+                d_ = json.loads(fp.read_text(encoding="utf8"))
+                HCX.setdefault("_pz", {}).update(d_.pop("_pz", {}))
+                HCX.update(d_)
+        c_ = HCX.get(f"{q['src'][-3:]}|{q['sec']}|{q['no']}") if "文法と読解" in q["src"] else HCX.get(f"{q['src']}|{q['sec']}|{q['no']}")
+        if c_:
+            q["cx"] = c_
+        if q.get("pid") is not None and str(q["pid"]) in HCX.get("_pz", {}):
+            q["pz"] = HCX["_pz"][str(q["pid"])]
         if "語彙解析" in q["src"]:              # no furigana where it would give the answer away
             if q["sec"] == "問題1":
                 q["qr"] = re.sub(r"［[^］]*］", lambda m: re.sub(r"\([^()]*\)", "", m.group(0)), q["qr"])
