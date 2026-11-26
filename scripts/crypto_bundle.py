@@ -131,6 +131,13 @@ def encrypt(src_dir, pw):
                 x_ = e.get("ex")
                 if x_ and not x_["zh"] and ex.get(e["id"], {}).get("ja") in CZ:
                     x_["zh"], x_["zc"] = CZ[ex[e["id"]]["ja"]], 1
+        # handout-PDF "examples" that are wrong-usage options or scraping debris (owner decision 2026-11-27): drop
+        dp_ = Path(src_dir) / "examples_drop.json"
+        if dp_.exists():
+            DROP = set(json.loads(dp_.read_text(encoding="utf8")))
+            for e in data["vocab"]:
+                if e.get("ex") and (e["ex"]["ja"] in DROP or ex.get(e["id"], {}).get("ja") in DROP):
+                    e.pop("ex")
         lp_ = Path(src_dir) / "listening.json"
         if lp_.exists():
             _n = lambda s: re.sub(r"[\s、。，,.!！?？「」『』()（）]", "", s)
