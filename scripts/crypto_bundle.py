@@ -129,8 +129,10 @@ def encrypt(src_dir, pw):
             CZ = json.loads(cz_.read_text(encoding="utf8"))
             for e in data["vocab"]:
                 x_ = e.get("ex")
-                if x_ and not x_["zh"] and ex.get(e["id"], {}).get("ja") in CZ:
-                    x_["zh"], x_["zc"] = CZ[ex[e["id"]]["ja"]], 1
+                if x_ and not x_["zh"]:
+                    k_ = x_["ja"] if x_["ja"] in CZ else ex.get(e["id"], {}).get("ja")
+                    if k_ in CZ:
+                        x_["zh"], x_["zc"] = CZ[k_], 1
         # handout-PDF "examples" that are wrong-usage options or scraping debris (owner decision 2026-11-27): drop
         dp_ = Path(src_dir) / "examples_drop.json"
         if dp_.exists():
